@@ -484,6 +484,7 @@ class TaggedItem(models.Model):
     Holds the relationship between a tag and the item being tagged.
     """
     tag          = models.ForeignKey(Tag, verbose_name=_('tag'), related_name='items')
+    added = models.DateTimeField(auto_now_add=True, db_index=True)
     content_type = models.ForeignKey(ContentType, verbose_name=_('content type'))
     object_id    = models.PositiveIntegerField(_('object id'), db_index=True)
     object       = generic.GenericForeignKey('content_type', 'object_id')
