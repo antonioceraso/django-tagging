@@ -462,6 +462,8 @@ class Tag(models.Model):
     """
     name = models.CharField(_('name'), max_length=50, unique=True, db_index=True)
     slug = models.SlugField(editable=False, unique=True)
+    added = models.DateTimeField(editable=False, auto_now_add=True, db_index=True)
+    last = models.DateTimeField(editable=False, db_index=True)
 
     objects = TagManager()
 
@@ -487,6 +489,11 @@ class TaggedItem(models.Model):
     object       = generic.GenericForeignKey('content_type', 'object_id')
 
     objects = TaggedItemManager()
+
+    def save(self, **kwargs):
+        super(TaggedItem, self).save(**kwargs)
+        self.tag.last = self.added
+        self.tag.save()
 
     class Meta:
         # Enforce unique tag association per object
