@@ -1,10 +1,12 @@
-==============
-Django Tagging
-==============
+===================
+TeknoLab Django Tagging
+===================
 
-This is a generic tagging application for Django projects
+This variant is based on django-tagging application:
+http://github.com/brosner/django-tagging
 
-For installation instructions, see the file "INSTALL.txt" in this
-directory; for instructions on how to use this application, and on
-what it provides, see the file "overview.txt" in the "docs/"
-directory.
+Additionally it provides or will provide:
+[x] slug fields for tags
+[x] time stamps to hold when a tag is added and when last time an item is tagged with that tag
+[ ] relations among tags to specify synonyms, parent, child, etc. relations types
+[ ] weight of relation between an item and a tag (i.e. how many times an item is tagged with that tag)
