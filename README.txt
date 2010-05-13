@@ -1,6 +1,6 @@
-===================
+=======================
 TeknoLab Django Tagging
-===================
+=======================
 
 This variant is based on django-tagging application:
 http://github.com/brosner/django-tagging
