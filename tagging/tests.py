@@ -22,7 +22,7 @@ False
 >>> t1.get_related()
 [<Tag: t3>]
 # testing relate with deep=True
->>> RelatedTag.objects.relate([t1, t4], deep=True)
+>>> RelatedTag.objects.relate([t1, t4], depth=1)
 >>> t4.get_related()
 [<Tag: t1>, <Tag: t3>]
 >>> t3.get_related()
