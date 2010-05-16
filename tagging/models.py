@@ -575,3 +575,23 @@ class RelatedTag(models.Model):
     class Meta:
         unique_together = (('tag', 'related_tag'),)
 
+
+class Term(models.Model):
+    tags = models.ManyToManyField(Tag, through='TermTag')
+
+    def __unicode__(self):
+        return ', '.join([t.name for t in self.tags])
+
+    
+class TermTag(models.Model):
+    term = models.ForeignKey(Term)
+    tag = models.ForeignKey(Tag)
+    order = models.PositiveSmallIntegerField()
+
+    def save(self, **kwargs):
+        """
+        Unless given explicitly, automatically increments the order field
+        """
+        if not self.id and not self.order:
+            self.order = self.term.tags.count() + 1
+        super(TermTag, self).save(**kwargs)
