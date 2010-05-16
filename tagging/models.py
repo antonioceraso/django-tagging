@@ -464,6 +464,7 @@ class Tag(models.Model):
     slug = models.SlugField(editable=False, unique=True)
     added = models.DateTimeField(editable=False, auto_now_add=True, db_index=True)
     last = models.DateTimeField(editable=False, db_index=True)
+    is_valid = models.BooleanField(default=True)
 
     objects = TagManager()
 
@@ -504,3 +505,68 @@ class TaggedItem(models.Model):
 
     def __unicode__(self):
         return u'%s [%s]' % (self.object, self.tag)
+
+
+class RelatedTagManager(models.Manager):
+    def relate(self, tags, relation_type='~', depth=0):
+        '''
+        related tags are symmetrically created
+        '''
+        for i in range(0, depth):
+            # widen the tags queryset with related tags
+            related = Tag.objects.none()
+            for tag in tags:
+                related = related | tag.get_related()
+            tags = list(set(list(tags) + list(related)))
+        for tag in tags:
+            if tag.is_valid:
+                for related_tag in tags:
+                    if related_tag.is_valid:
+                        if relation_type == '<': symm_relation_type = '>'
+                        elif relation_type == '>': symm_relation_type = '<'
+                        elif relation_type == '=>': symm_relation_type = '<='
+                        elif relation_type == '<=': symm_relation_type = '=>'
+                        else: symm_relation_type = relation_type
+                        RelatedTag.objects.get_or_create(tag=tag, related_tag=related_tag,
+                                                         relation_type=symm_relation_type)
+
+RELATION_CHOICES = (('!', _('not related')),
+                    ('~', _('symmetrically related')),
+                    ('=', _('synonym')),
+                    ('<', _('is in subset of')),
+                    ('>', _('is parent category of')),
+                    ('=>', _('forward to')),
+                    ('<='), _('forwarded from'))
+
+class RelatedTag(models.Model):
+    tag = models.ForeignKey(Tag)
+    related_tag = models.ForeignKey(Tag, related_name='_not_used_(symmetrical)_')
+    added = models.DateTimeField(auto_now_add=True, db_index=True)
+    relation_type = models.CharField(max_length=2, default=1, db_index=True,
+                                     choices=RELATION_CHOICES)
+
+    objects = RelatedTagManager()
+
+    def save(self, **kwargs):
+        '''
+        symmetry is taken care of by RelatedTagManager.relate()
+        '''
+        if self.tag != self.related_tag:
+            if self.id:
+                # if 'related' attribute is set manually, updates the symmetrical one
+                try:
+                    symm = RelatedTag.objects.get(tag=self.related_tag, related_tag=self.tag)
+                except RelatedTag.DoesNotExist:
+                    pass
+                else:
+                    if self.related != symm.related:
+                        RelatedTag.objects.filter(id=symm.id).update(related=self.related)
+            super(RelatedTag, self).save(**kwargs)
+
+    def __unicode__(self):
+        names = '%s - %s' % (self.tag, self.related_tag)
+        return self.related and names or '%s (not related)' % names
+
+    class Meta:
+        unique_together = (('tag', 'related_tag'),)
+
