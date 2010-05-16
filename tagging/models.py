@@ -472,6 +472,11 @@ class Tag(models.Model):
         self.slug = slugify(self.name)
         super(Tag, self).save(*args, **kwargs)
         
+    def get_related(self, relation_type='~'):
+        qs = RelatedTag.objects.filter(tag=self, relation_type=relation_type)
+        tags = Tag.objects.filter(id__in=[rt.related_tag__id for rt in qs], is_valid=True)
+        return tags
+
     class Meta:
         ordering = ('name',)
         verbose_name = _('tag')
@@ -516,7 +521,7 @@ class RelatedTagManager(models.Manager):
             # widen the tags queryset with related tags
             related = Tag.objects.none()
             for tag in tags:
-                related = related | tag.get_related()
+                related = related | tag.get_related(relation_type)
             tags = list(set(list(tags) + list(related)))
         for tag in tags:
             if tag.is_valid:
