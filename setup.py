@@ -51,12 +51,10 @@ for dirpath, dirnames, filenames in os.walk(tagging_dir):
 
 
 setup(
-    name = 'django-tagging',
+    name = 'teknolab-django-tagging',
     version = tagging.get_version(),
     description = 'Generic tagging application for Django',
-    author = 'Jonathan Buchanan',
-    author_email = 'jonathan.buchanan@gmail.com',
-    url = 'http://code.google.com/p/django-tagging/',
+    url = 'http://github.com/teknolab/teknolab-django-tagging',
     packages = packages,
     data_files = data_files,
     classifiers = ['Development Status :: 4 - Beta',
