@@ -17,7 +17,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.template.defaultfilters import slugify
 
 from tagging import settings
-from tagging.utils import calculate_cloud, get_tag_list, get_queryset_and_model, parse_tag_input
+from tagging.utils import calculate_cloud, get_tag, get_tag_list, get_queryset_and_model, parse_tag_input
 from tagging.utils import LOGARITHMIC
 
 qn = connection.ops.quote_name
@@ -513,32 +513,30 @@ class TaggedItem(models.Model):
 
 
 class RelatedTagManager(models.Manager):
-    def relate(self, tags, relation_type='~', depth=0):
+    def relate(self, tags, relation_type='~'):
         '''
-        related tags are symmetrically created
+        Accepts a list of tags, either as Tag instances or strings
+        and relates them symmetrically
         '''
-        for i in range(0, depth):
-            # widen the tags queryset with related tags
-            related = Tag.objects.none()
-            for tag in tags:
-                related = related | tag.get_related(relation_type)
-            tags = list(set(list(tags) + list(related)))
         for tag in tags:
+            tag = get_tag(tag)
             if tag.is_valid:
                 for related_tag in tags:
+                    related_tag = get_tag(related_tag)
                     if related_tag.is_valid:
-                        if relation_type == '<': symm_relation_type = '>'
-                        elif relation_type == '>': symm_relation_type = '<'
-                        elif relation_type == '=>': symm_relation_type = '<='
-                        elif relation_type == '<=': symm_relation_type = '=>'
-                        else: symm_relation_type = relation_type
-                        RelatedTag.objects.get_or_create(tag=tag, related_tag=related_tag,
-                                                         relation_type=symm_relation_type)
+                        if tag != related_tag:
+                            if relation_type == '<': symm_relation_type = '>'
+                            elif relation_type == '>': symm_relation_type = '<'
+                            elif relation_type == '=>': symm_relation_type = '<='
+                            elif relation_type == '<=': symm_relation_type = '=>'
+                            else: symm_relation_type = relation_type
+                            RelatedTag.objects.get_or_create(tag=tag, related_tag=related_tag,
+                                                             relation_type=symm_relation_type)
 
 RELATION_CHOICES = (('!', _('not related')),
                     ('~', _('symmetrically related')),
                     ('=', _('synonym')),
-                    ('<', _('is in subset of')),
+                    ('<', _('is in category')),
                     ('>', _('is parent category of')),
                     ('=>', _('forward to')),
                     ('<='), _('forwarded from'))

@@ -6,8 +6,9 @@ from django.db.models.fields import CharField
 from django.utils.translation import ugettext_lazy as _
 
 from tagging import settings
-from tagging.models import Tag
+from tagging.models import Tag, RelatedTag
 from tagging.utils import edit_string_for_tags
+
 
 class TagField(TextField):
     """
@@ -17,7 +18,15 @@ class TagField(TextField):
     """
     def __init__(self, *args, **kwargs):
         kwargs['blank'] = kwargs.get('blank', True)
-        kwargs['default'] = kwargs.get('default', '')
+        kwargs['default'] = kwargs.get('default', '')        
+        self.category = kwargs.get('category')
+        self.relate = kwargs.get('relate', True)
+
+        # clean the extra fields
+        for k in kwargs.keys():
+            if k in ('category', 'relate'):
+                del(kwargs[k])
+
         super(TagField, self).__init__(*args, **kwargs)
 
     def contribute_to_class(self, cls, name):
@@ -70,9 +79,16 @@ class TagField(TextField):
     def _save(self, **kwargs): #signal, sender, instance):
         """
         Save tags back to the database
+        
         """
         tags = self._get_instance_tag_cache(kwargs['instance'])
         Tag.objects.update_tags(kwargs['instance'], tags)
+        if self.relate:
+            RelatedTag.objects.relate(tags)
+            if self.category:
+                # relate each tag with the given categories
+                for tag in tags:
+                    RelatedTag.objects.relate((tag, self.category), relation_type='<')
 
     def _update(self, **kwargs): #signal, sender, instance):
         """
