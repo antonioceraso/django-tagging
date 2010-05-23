@@ -539,7 +539,7 @@ RELATION_CHOICES = (('!', _('not related')),
                     ('<', _('is in category')),
                     ('>', _('is parent category of')),
                     ('=>', _('forward to')),
-                    ('<='), _('forwarded from'))
+                    ('<=', _('forwarded from')))
 
 class RelatedTag(models.Model):
     tag = models.ForeignKey(Tag)
