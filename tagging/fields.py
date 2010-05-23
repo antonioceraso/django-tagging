@@ -9,14 +9,13 @@ from tagging import settings
 from tagging.models import Tag
 from tagging.utils import edit_string_for_tags
 
-class TagField(CharField):
+class TagField(TextField):
     """
     A "special" character field that actually works as a relationship to tags
     "under the hood". This exposes a space-separated string of tags, but does
     the splitting/reordering/etc. under the hood.
     """
     def __init__(self, *args, **kwargs):
-        kwargs['max_length'] = kwargs.get('max_length', 255)
         kwargs['blank'] = kwargs.get('blank', True)
         kwargs['default'] = kwargs.get('default', '')
         super(TagField, self).__init__(*args, **kwargs)
@@ -110,7 +109,7 @@ class TagField(CharField):
             self._set_instance_tag_cache(instance, tags)
 
     def get_internal_type(self):
-        return 'CharField'
+        return 'TextField'
 
     def formfield(self, **kwargs):
         from tagging import forms
