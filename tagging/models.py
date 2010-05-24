@@ -49,7 +49,8 @@ class TagManager(models.Manager):
         current_tag_names = [tag.name for tag in current_tags]
         for tag_name in updated_tag_names:
             if tag_name not in current_tag_names:
-                tag, created = self.get_or_create(slug=slugify(tag_name))
+                tag, created = self.get_or_create(slug=slugify(tag_name),
+                                                  defaults={'name': tag_name})
                 TaggedItem._default_manager.create(tag=tag, object=obj)
 
     def add_tag(self, obj, tag_name):
