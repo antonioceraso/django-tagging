@@ -463,7 +463,7 @@ class Tag(models.Model):
     name = models.CharField(_('name'), max_length=50, unique=True, db_index=True)
     slug = models.SlugField(editable=False, unique=True)
     added = models.DateTimeField(editable=False, auto_now_add=True, db_index=True)
-    last = models.DateTimeField(editable=False, db_index=True)
+    last = models.DateTimeField(editable=False, db_index=True, blank=True, null=True)
     is_valid = models.BooleanField(default=True)
 
     objects = TagManager()
