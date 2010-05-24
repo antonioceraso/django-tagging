@@ -9,7 +9,6 @@ from django.db.models.query import QuerySet
 from django.utils.encoding import force_unicode
 from django.utils.translation import ugettext as _
 from django.template.defaultfilters import slugify
-from tagging.models import Tag
 
 # Python 2.3 compatibility
 try:
@@ -220,6 +219,7 @@ def get_tag(tag):
 def get_or_create_tag(tag):
     tag = get_tag(tag)
     if not tag and tag != '':
+        from tagging.models import Tag
         tag = Tag.objects.create(name=tag)
     return tag
 
