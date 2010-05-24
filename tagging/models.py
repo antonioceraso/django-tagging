@@ -519,19 +519,21 @@ class RelatedTagManager(models.Manager):
         and relates them symmetrically
         '''
         for tag in tags:
-            tag = get_tag(tag)
-            if tag.is_valid:
-                for related_tag in tags:
-                    related_tag = get_tag(related_tag)
-                    if related_tag.is_valid:
-                        if tag != related_tag:
-                            if relation_type == '<': symm_relation_type = '>'
-                            elif relation_type == '>': symm_relation_type = '<'
-                            elif relation_type == '=>': symm_relation_type = '<='
-                            elif relation_type == '<=': symm_relation_type = '=>'
-                            else: symm_relation_type = relation_type
-                            RelatedTag.objects.get_or_create(tag=tag, related_tag=related_tag,
-                                                             relation_type=symm_relation_type)
+            if tag:
+                tag = get_tag(tag)
+                if tag.is_valid:
+                    for related_tag in tags:
+                        if related_tag:
+                            related_tag = get_tag(related_tag)
+                            if related_tag.is_valid:
+                                if tag != related_tag:
+                                    if relation_type == '<': symm_relation_type = '>'
+                                    elif relation_type == '>': symm_relation_type = '<'
+                                    elif relation_type == '=>': symm_relation_type = '<='
+                                    elif relation_type == '<=': symm_relation_type = '=>'
+                                    else: symm_relation_type = relation_type
+                                    RelatedTag.objects.get_or_create(tag=tag, related_tag=related_tag,
+                                                                     relation_type=symm_relation_type)
 
 RELATION_CHOICES = (('!', _('not related')),
                     ('~', _('symmetrically related')),
