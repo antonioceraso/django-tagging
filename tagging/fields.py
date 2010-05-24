@@ -7,7 +7,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from tagging import settings
 from tagging.models import Tag, RelatedTag
-from tagging.utils import edit_string_for_tags
+from tagging.utils import edit_string_for_tags, get_tag_list
 
 
 class TagField(TextField):
@@ -84,7 +84,7 @@ class TagField(TextField):
         tags = self._get_instance_tag_cache(kwargs['instance'])
         Tag.objects.update_tags(kwargs['instance'], tags)
         if self.relate:
-            RelatedTag.objects.relate(tags)
+            RelatedTag.objects.relate(get_tag_list(tags))
             if self.category:
                 # relate each tag with the given categories
                 for tag in tags:
