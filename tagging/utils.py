@@ -9,6 +9,7 @@ from django.db.models.query import QuerySet
 from django.utils.encoding import force_unicode
 from django.utils.translation import ugettext as _
 from django.template.defaultfilters import slugify
+from tagging.models import Tag
 
 # Python 2.3 compatibility
 try:
