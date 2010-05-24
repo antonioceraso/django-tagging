@@ -8,6 +8,7 @@ import types
 from django.db.models.query import QuerySet
 from django.utils.encoding import force_unicode
 from django.utils.translation import ugettext as _
+from django.template.defaultfilters import slugify
 
 # Python 2.3 compatibility
 try:
@@ -214,6 +215,12 @@ def get_tag(tag):
         pass
 
     return None
+
+def get_or_create_tag(tag):
+    tag = get_tag(tag)
+    if not tag and tag != '':
+        tag = Tag.objects.create(name=tag)
+    return tag
 
 # Font size distribution algorithms
 LOGARITHMIC, LINEAR = 1, 2

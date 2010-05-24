@@ -520,11 +520,11 @@ class RelatedTagManager(models.Manager):
         and relates them symmetrically
         '''
         for tag in tags:
-            tag = get_tag(tag)
+            tag = get_or_create_tag(tag)
             if tag:
                 if tag.is_valid:
                     for related_tag in tags:
-                        related_tag = get_tag(related_tag)
+                        related_tag = get_or_create_tag(related_tag)
                         if related_tag:
                             if related_tag.is_valid:
                                 if tag != related_tag:
