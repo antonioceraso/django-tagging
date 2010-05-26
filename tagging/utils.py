@@ -10,11 +10,6 @@ from django.utils.encoding import force_unicode
 from django.utils.translation import ugettext as _
 from django.template.defaultfilters import slugify
 
-# Python 2.3 compatibility
-try:
-    set
-except NameError:
-    from sets import Set as set
 
 def parse_tag_input(input):
     """
