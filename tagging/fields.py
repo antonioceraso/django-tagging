@@ -4,6 +4,7 @@ A custom Model Field for tagging.
 from django.db.models import signals
 from django.db.models.fields import TextField
 from django.utils.translation import ugettext_lazy as _
+from django.template.defaultfilters import slugify
 
 from tagging import settings
 from tagging.models import Tag, RelatedTag
@@ -86,7 +87,8 @@ class TagField(TextField):
         if self.relate:
             RelatedTag.objects.relate_all(tags)
             if self.category:
-                cat_tag, c = Tag.objects.get_or_create(name=self.category)
+                cat_tag, c = Tag.objects.get_or_create(slug=slugify(self.category),
+                                                       defaults={'name': self.category})
                 RelatedTag.objects.relate(cat_tag, '>', tags)
 
     def _update(self, **kwargs): #signal, sender, instance):
