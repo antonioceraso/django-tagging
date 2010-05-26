@@ -84,11 +84,10 @@ class TagField(TextField):
         tags = self._get_instance_tag_cache(kwargs['instance'])
         Tag.objects.update_tags(kwargs['instance'], tags)
         if self.relate:
-            RelatedTag.objects.relate(get_tag_list(tags))
+            RelatedTag.objects.relate_all(tags)
             if self.category:
-                # relate each tag with the given categories
-                for tag in tags:
-                    RelatedTag.objects.relate((tag, self.category), relation_type='<')
+                cat_tag, c = Tag.objects.get_or_create(self.category)
+                RelatedTag.objects.relate(cat_tag, '>', tags)
 
     def _update(self, **kwargs): #signal, sender, instance):
         """

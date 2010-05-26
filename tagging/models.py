@@ -65,7 +65,8 @@ class TagManager(models.Manager):
         tag_name = tag_names[0]
         if settings.FORCE_LOWERCASE_TAGS:
             tag_name = tag_name.lower()
-        tag, created = self.get_or_create(name=tag_name)
+        tag, created = self.get_or_create(slug=slugify(tag_name),
+                                          defaults={'name': tag_name})
         ctype = ContentType.objects.get_for_model(obj)
         TaggedItem._default_manager.get_or_create(
             tag=tag, content_type=ctype, object_id=obj.pk)
@@ -514,35 +515,67 @@ class TaggedItem(models.Model):
 
 
 class RelatedTagManager(models.Manager):
-    def relate(self, tags, relation_type='~'):
+    def relate(self, tags, relation_type='~', related_tags=[], force_create=False):
         '''
-        Accepts a list of tags, either as Tag instances or strings
-        and relates them symmetrically
+        Relates each tag in a list of tags with each tag in a list of related_tags
+        with the given relation type. Tag lists can be Tag instances or strings.
+        Relations are created symmetrically. If force_create = True, tags are 
+        created from string if they do not already exist. If just a list of tags are 
+        given, it calls relate_all() to relate them with each other using '~' relation.
+        Updates existing relations if needed.
         '''
+        tags = get_tag_list(tags)
+        if related_tags == []:
+            self.relate_all(tags)
+        else:
+            related_tags = get_tag_list(related_tags)
+            for tag in tags:
+                tag = get_tag(tag)
+                if tag and tag.is_valid:
+                        for related_tag in related_tags:
+                            related_tag = get_tag(related_tag)
+                            if related_tag and related_tag.is_valid:
+                                    if tag != related_tag:
+                                        rel, c = RelatedTag.objects.get_or_create(tag=tag, related_tag=related_tag,
+                                                                                  defaults={'relation_type': relation_type})
+                                        if not c:
+                                            # check if the existing relation is correct
+                                            if rel.relation_type != relation_type:
+                                                rel.relation_type = relation_type
+                                                rel.save()
+    
+    def relate_all(self, tags):
+        '''
+        Relates a list of tags with each other (for '~' relations only)
+        '''
+        tags = get_tag_list(tags)
         for tag in tags:
-            tag = get_or_create_tag(tag)
-            if tag:
-                if tag.is_valid:
+            tag = get_tag(tag)
+            if tag and tag.is_valid:
                     for related_tag in tags:
-                        related_tag = get_or_create_tag(related_tag)
-                        if related_tag:
-                            if related_tag.is_valid:
+                        related_tag = get_tag(related_tag)
+                        if related_tag and related_tag.is_valid:
                                 if tag != related_tag:
-                                    if relation_type == '<': symm_relation_type = '>'
-                                    elif relation_type == '>': symm_relation_type = '<'
-                                    elif relation_type == '=>': symm_relation_type = '<='
-                                    elif relation_type == '<=': symm_relation_type = '=>'
-                                    else: symm_relation_type = relation_type
                                     RelatedTag.objects.get_or_create(tag=tag, related_tag=related_tag,
-                                                                     relation_type=symm_relation_type)
-
+                                                                     defaults={'relation_type': '~'})
+                                    
+        
 RELATION_CHOICES = (('!', _('not related')),
                     ('~', _('symmetrically related')),
                     ('=', _('synonym')),
-                    ('<', _('is in category')),
-                    ('>', _('is parent category of')),
-                    ('=>', _('forward to')),
-                    ('<=', _('forwarded from')))
+                    ('<', _('is child of')),
+                    ('>', _('is parent of')),
+                    ('.', _('short form of')),
+                    ('_', _('long form of')),
+                    ('0', _('root of')),
+                    ('+', _('affixed form of')),
+                    ('=>', _('non preferred synonym of')), # forward to the preferred one
+                    ('<=', _('preferred synonym of')))
+
+REVERSE_RELATIONS = {'<': '>', '>': '<',
+                     '.': '_', '_': '.',
+                     '0': '+', '+': '0',
+                     '=>': '<=', '<=': '=>'}
 
 class RelatedTag(models.Model):
     tag = models.ForeignKey(Tag)
@@ -555,23 +588,22 @@ class RelatedTag(models.Model):
 
     def save(self, **kwargs):
         '''
-        symmetry is taken care of by RelatedTagManager.relate()
+        reverse relations are created/updated here
         '''
-        if self.tag != self.related_tag:
-            if self.id:
-                # if 'related' attribute is set manually, updates the symmetrical one
-                try:
-                    symm = RelatedTag.objects.get(tag=self.related_tag, related_tag=self.tag)
-                except RelatedTag.DoesNotExist:
-                    pass
-                else:
-                    if self.related != symm.related:
-                        RelatedTag.objects.filter(id=symm.id).update(related=self.related)
+        if self.tag != self.related_tag: # cannot relate a tag with itself
             super(RelatedTag, self).save(**kwargs)
+            # get the reverse type; if does not exist, reverse = original
+            reverse_rel_type = REVERSE_RELATIONS.get(self.relation_type, self.relation_type)
+            rev, created = RelatedTag.objects.get_or_create(tag=self.related_tag, related_tag=self.tag,
+                                                            defaults={'relation_type': reverse_rel_type})
+            if not created:
+                # reverse already exists, check the relation type and update if necessary
+                if rev.relation_type != reverse_rel_type:
+                    rev.relation_type = reverse_rel_type
+                    rev.save()
 
     def __unicode__(self):
-        names = '%s - %s' % (self.tag, self.related_tag)
-        return self.related and names or '%s (not related)' % names
+        return '%s %s %s' % (self.tag, self.relation_type, self.related_tag)
 
     class Meta:
         unique_together = (('tag', 'related_tag'),)
