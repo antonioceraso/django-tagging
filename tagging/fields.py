@@ -86,7 +86,7 @@ class TagField(TextField):
         if self.relate:
             RelatedTag.objects.relate_all(tags)
             if self.category:
-                cat_tag, c = Tag.objects.get_or_create(self.category)
+                cat_tag, c = Tag.objects.get_or_create(name=self.category)
                 RelatedTag.objects.relate(cat_tag, '>', tags)
 
     def _update(self, **kwargs): #signal, sender, instance):
