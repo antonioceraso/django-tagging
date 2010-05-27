@@ -11,3 +11,4 @@ Additionally it provides or will provide:
 [x] relations among tags to specify synonyms, parent, child, etc. relations types
 [x] define terms as sets of tags
 [ ] weight of relation between an item and a tag (i.e. how many times an item is tagged with that tag)
+[ ] de-normalize to remove all join queries
