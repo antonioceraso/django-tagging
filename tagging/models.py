@@ -474,9 +474,17 @@ class Tag(models.Model):
         self.slug = slugify(self.name)
         super(Tag, self).save(*args, **kwargs)
         
-    def get_related(self, relation_type='~'):
-        qs = RelatedTag.objects.filter(tag=self, relation_type=relation_type)
-        tags = Tag.objects.filter(id__in=[rt.related_tag__id for rt in qs], is_valid=True)
+    def get_related(self, relation_type=None):
+        """
+        Returns the related tags of the tag instance. 
+        If the relation type is not specified, all related tags
+        except the ones of type '!' (not related) are returned.
+        """
+        tags = Tag.objects.filter(is_valid=True).exclude(pk=self.id)
+        if relation_type:
+            tags = tags.filter(relatedtag__relation_type=relation_type)
+        else:
+            tags = tags.exclude(relatedtag__relation_type__isnull=True).exclude(relatedtag__relation_type='!')
         return tags
 
     class Meta:
