@@ -11,7 +11,7 @@ class TagAdmin(admin.ModelAdmin):
 admin.site.register(Tag, TagAdmin)
 
 class RelatedTagAdmin(admin.ModelAdmin):
-    list_display = ('tag', 'related_tag', 'relation_type', 'added', 'count')
+    list_display = ('tag', 'relation_type', 'related_tag', 'added', 'count')
     list_filter = ('relation_type',)
     list_editable = ('relation_type',)
     search_fields = ('tag__name', 'related_tag__name')

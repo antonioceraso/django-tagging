@@ -580,17 +580,17 @@ class RelatedTagManager(models.Manager):
                                         
                                     
         
-RELATION_CHOICES = (('!', _('not related')),
-                    ('~', _('symmetrically related')),
-                    ('=', _('synonym')),
-                    ('<', _('is child of')),
-                    ('>', _('is parent of')),
-                    ('.', _('short form of')),
-                    ('_', _('long form of')),
-                    ('0', _('root of')),
-                    ('+', _('affixed form of')),
-                    ('=>', _('non preferred synonym of')), # forward to the preferred one
-                    ('<=', _('preferred synonym of')))
+RELATION_CHOICES = (('!', _('! (not related)')),
+                    ('~', _('~ (symmetrically related)')),
+                    ('=', _('= (synonym)')),
+                    ('<', _('< (is child of)')),
+                    ('>', _('> (is parent of)')),
+                    ('.', _('. (short form of)')),
+                    ('_', _('_ (long form of)')),
+                    ('0', _('0 (root of)')),
+                    ('+', _('+ (affixed form of)')),
+                    ('=>', _('=> (non preferred synonym of)')), # forward to the preferred one
+                    ('<=', _('<= (preferred synonym of)')))
 
 REVERSE_RELATIONS = {'<': '>', '>': '<',
                      '.': '_', '_': '.',
