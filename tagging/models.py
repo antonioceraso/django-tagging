@@ -467,6 +467,7 @@ class Tag(models.Model):
     added = models.DateTimeField(editable=False, auto_now_add=True, db_index=True)
     last = models.DateTimeField(editable=False, db_index=True, blank=True, null=True)
     is_valid = models.BooleanField(default=True)
+    usage = models.PositiveIntegerField(default=0)
 
     objects = TagManager()
 
@@ -508,9 +509,18 @@ class TaggedItem(models.Model):
     objects = TaggedItemManager()
 
     def save(self, **kwargs):
+        t = self.tag
+        if not self.id:
+            t.usage += 1
         super(TaggedItem, self).save(**kwargs)
-        self.tag.last = self.added
-        self.tag.save()
+        t.last = self.added
+        t.save()
+
+    def delete(self, **kwargs):
+        super(TaggedItem, self).delete(**kwargs)
+        t = self.tag
+        t.usage -= 1
+        t.save()
 
     class Meta:
         # Enforce unique tag association per object
