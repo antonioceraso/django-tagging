@@ -12,5 +12,8 @@ DATABASE_ENGINE = 'sqlite3'
 DATABASE_NAME = 'test.db'
 
 INSTALLED_APPS = (
+    'django.contrib.auth',
+    'django.contrib.admin',
+    'django.contrib.contenttypes',
     'tagging',
 )
