@@ -1,11 +1,6 @@
 """
 Models and managers for generic tagging.
 """
-# Python 2.3 compatibility
-try:
-    set
-except NameError:
-    from sets import Set as set
 
 from datetime import datetime
 
@@ -466,8 +461,8 @@ class Tag(models.Model):
     slug = models.SlugField(editable=False, unique=True)
     added = models.DateTimeField(editable=False, auto_now_add=True, db_index=True)
     last = models.DateTimeField(editable=False, db_index=True, blank=True, null=True)
-    is_valid = models.BooleanField(default=True)
-    usage = models.PositiveIntegerField(default=0)
+    is_valid = models.BooleanField(default=True, db_index=True)
+    usage = models.PositiveIntegerField(default=0, editable=False, db_index=True)
 
     objects = TagManager()
 
@@ -500,11 +495,11 @@ class TaggedItem(models.Model):
     """
     Holds the relationship between a tag and the item being tagged.
     """
-    tag          = models.ForeignKey(Tag, verbose_name=_('tag'), related_name='items')
+    tag = models.ForeignKey(Tag, verbose_name=_('tag'), related_name='items')
     added = models.DateTimeField(auto_now_add=True, db_index=True)
     content_type = models.ForeignKey(ContentType, verbose_name=_('content type'))
-    object_id    = models.PositiveIntegerField(_('object id'), db_index=True)
-    object       = generic.GenericForeignKey('content_type', 'object_id')
+    object_id = models.PositiveIntegerField(_('object id'), db_index=True)
+    object = generic.GenericForeignKey('content_type', 'object_id')
 
     objects = TaggedItemManager()
 
@@ -555,12 +550,14 @@ class RelatedTagManager(models.Manager):
                             if related_tag and related_tag.is_valid:
                                     if tag != related_tag:
                                         rel, c = RelatedTag.objects.get_or_create(tag=tag, related_tag=related_tag,
-                                                                                  defaults={'relation_type': relation_type})
+                                                                                  defaults={'relation_type': relation_type,
+                                                                                            'count': 1})
                                         if not c:
+                                            rel.count += 1
                                             # check if the existing relation is correct
                                             if rel.relation_type != relation_type:
                                                 rel.relation_type = relation_type
-                                                rel.save()
+                                            rel.save()
     
     def relate_all(self, tags):
         '''
@@ -574,8 +571,13 @@ class RelatedTagManager(models.Manager):
                         related_tag = get_tag(related_tag)
                         if related_tag and related_tag.is_valid:
                                 if tag != related_tag:
-                                    RelatedTag.objects.get_or_create(tag=tag, related_tag=related_tag,
-                                                                     defaults={'relation_type': '~'})
+                                    rel, c = RelatedTag.objects.get_or_create(tag=tag, related_tag=related_tag,
+                                                                              defaults={'relation_type': '~',
+                                                                                        'count': 1})
+                                    if not c:
+                                        rel.count += 1
+                                        rel.save()
+                                        
                                     
         
 RELATION_CHOICES = (('!', _('not related')),
@@ -601,6 +603,7 @@ class RelatedTag(models.Model):
     added = models.DateTimeField(auto_now_add=True, db_index=True)
     relation_type = models.CharField(max_length=2, default=1, db_index=True,
                                      choices=RELATION_CHOICES)
+    count = models.PositiveIntegerField(default=1, db_index=True, editable=False)
 
     objects = RelatedTagManager()
 
@@ -619,6 +622,13 @@ class RelatedTag(models.Model):
                 if rev.relation_type != reverse_rel_type:
                     rev.relation_type = reverse_rel_type
                     rev.save()
+    
+    def delete(self, **kwargs):
+        '''
+        relations are not deleted, but their relation type is set to 'not related'
+        '''
+        self.relation_type = '!'
+        self.save()
 
     def __unicode__(self):
         return '%s %s %s' % (self.tag, self.relation_type, self.related_tag)
