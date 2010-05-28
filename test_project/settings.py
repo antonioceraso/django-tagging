@@ -15,5 +15,8 @@ INSTALLED_APPS = (
     'django.contrib.auth',
     'django.contrib.admin',
     'django.contrib.contenttypes',
+    'django.contrib.sessions',
     'tagging',
 )
+
+ROOT_URLCONF = 'urls'
