@@ -64,7 +64,7 @@ def search_autocomplete(request):
         tags = Tag.objects.filter(name__icontains=q).order_by('-usage')[:20]
     tag_dict = {}
     for t in tags:
-        tag_dict.update({"caption": t.name, "value": t.value})
+        tag_dict.update({"caption": t.name, "value": t.slug})
     dump = json.dumps([tag_dict])
     return HttpResponse(dump, mimetype="text/plain")
     
