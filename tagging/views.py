@@ -60,11 +60,11 @@ def tagged_object_list(request, queryset_or_model=None, tag=None,
 
 def search_autocomplete(request):
     q = request.GET.get('tag')
+    dump = ''
     if q:
-        tags = Tag.objects.filter(name__icontains=q).order_by('-usage')[:20]
-    tag_list = [] 
-    for t in tags:
-        tag_list.append({"caption": t.name, "value": t.slug})
-    dump = json.dumps(tag_list)
-    return HttpResponse(dump, mimetype="text/plain")
-    
+        tags = Tag.objects.filter(name__icontains=q).order_by('-usage')
+        tag_list = [] 
+        for t in tags:
+            tag_list.append({"caption": t.name, "value": t.slug})
+        dump = json.dumps(tag_list)
+    return     HttpResponse(dump, mimetype="text/plain")

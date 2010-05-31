@@ -28,6 +28,10 @@ class TagField(forms.CharField):
     A ``CharField`` which validates that its input is a valid list of
     tag names.
     """
+    def __init__(self, *args, **kwargs):
+        super(TagField, self).__init__(*args, **kwargs)
+        self.widget = forms.TextInput(attrs={'class':'tag_field'})
+
     def clean(self, value):
         value = super(TagField, self).clean(value)
         if value == u'':
