@@ -4,6 +4,7 @@ Tagging related views.
 from django.http import Http404
 from django.utils.translation import ugettext as _
 from django.views.generic.list_detail import object_list
+from django.http import HttpResponse
 
 from tagging.models import Tag, TaggedItem
 from tagging.utils import get_tag, get_queryset_and_model
@@ -50,3 +51,11 @@ def tagged_object_list(request, queryset_or_model=None, tag=None,
             Tag.objects.related_for_model(tag_instance, queryset_or_model,
                                           counts=related_tag_counts)
     return object_list(request, queryset, **kwargs)
+
+
+def search(request):
+    pass
+
+def search_autocomplete(request):
+    return HttpResponse('[{"caption":"abdi ibrahim","value":5}]', mimetype="text/plain")
+    
