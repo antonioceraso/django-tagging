@@ -62,9 +62,10 @@ def search_autocomplete(request):
     q = request.GET.get('tag')
     if q:
         tags = Tag.objects.filter(name__icontains=q).order_by('-usage')[:20]
-    tag_dict = {}
+    tag_list = [] 
     for t in tags:
-        tag_dict.update({"caption": t.name, "value": t.slug})
-    dump = json.dumps([tag_dict])
+        tag_list.append({"caption": t.name, "value": t.slug})
+    dump = json.dumps([tag_list])
     return HttpResponse(dump, mimetype="text/plain")
+    return HttpResponse('[{"caption":"abdi ibrahim","value":5}]', mimetype="text/plain")
     
