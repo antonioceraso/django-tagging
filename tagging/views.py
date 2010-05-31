@@ -67,5 +67,5 @@ def search_autocomplete(request):
         tag_list.append({"caption": t.name, "value": t.slug})
     dump = json.dumps(tag_list)
 #    return HttpResponse(dump, mimetype="text/plain")
-    return HttpResponse('[{"caption": "Tepe Teknolojik Servisler A.\u015e.", "value": "tepe-teknolojik-servisler-as"}]', mimetype="text/plain")
+    return HttpResponse('[{"caption": "Tepe Teknolojik Servisler", "value": 3}]', mimetype="text/plain")
     
