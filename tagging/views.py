@@ -9,6 +9,11 @@ from django.http import HttpResponse
 from tagging.models import Tag, TaggedItem
 from tagging.utils import get_tag, get_queryset_and_model
 
+try:
+    import json # comes with python 2.6
+except ImportError:
+    import simplejson as json
+
 def tagged_object_list(request, queryset_or_model=None, tag=None,
         related_tags=False, related_tag_counts=True, **kwargs):
     """
@@ -54,5 +59,12 @@ def tagged_object_list(request, queryset_or_model=None, tag=None,
 
 
 def search_autocomplete(request):
-    return HttpResponse('[{"caption":"abdi ibrahim","value":5}]', mimetype="text/plain")
+    q = request.GET.get('tag')
+    if q:
+        tags = Tag.objects.filter(name__icontains=q).order_by('-count')[:20]
+    tag_dict = {}
+    for t in tags:
+        tag_dict.update({"caption": t.name, "value": t.value})
+    dump = json.dumps([tag_dict])
+    return HttpResponse(dump, mimetype="text/plain")
     
