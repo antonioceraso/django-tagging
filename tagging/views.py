@@ -66,6 +66,6 @@ def search_autocomplete(request):
     for t in tags:
         tag_list.append({"caption": t.name, "value": t.slug})
     dump = json.dumps(tag_list)
-    return HttpResponse(dump, mimetype="text/plain")
-#    return HttpResponse('[{"caption":"abdi ibrahim","value":5}]', mimetype="text/plain")
+#    return HttpResponse(dump, mimetype="text/plain")
+    return HttpResponse('[{"caption": "Tepe Teknolojik Servisler A.\u015e.", "value": "tepe-teknolojik-servisler-as"}, {"caption": "HACETTEPE ATILIM ORTOPED\u0130 SAN.", "value": "hacettepe-atilim-ortopedi-san"}, {"caption": "HACETTEPE ORTOPED\u0130", "value": "hacettepe-ortopedi"}, {"caption": "\u00d6ZEL HACETTEPE ORTOPED\u0130 PROTEZ", "value": "ozel-hacettepe-ortopedi-protez"}, {"caption": "ZONGULDAK HACETTEPE MED\u0130KAL OR", "value": "zonguldak-hacettepe-medikal-or"}, {"caption": "SAMSUN HACETTEPE ORTOPED\u0130-HASA", "value": "samsun-hacettepe-ortopedi-hasa"}, {"caption": "HACETTEPE ORTOPED\u0130 MED\u0130KAL PRO", "value": "hacettepe-ortopedi-medikal-pro"}, {"caption": "HACETTEPE ORTOPED\u0130 SEV\u0130M AYDIN", "value": "hacettepe-ortopedi-sevim-aydin"}, {"caption": "HACETTEPE ORTOPED\u0130- TAMER K\u00dc\u00c7\u00dc", "value": "hacettepe-ortopedi-tamer-kucu"}, {"caption": "HACETTEPE \u00dcN\u0130VERS\u0130TES\u0130 D\u00d6NER S", "value": "hacettepe-universitesi-doner-s"}]', mimetype="text/plain")
     
