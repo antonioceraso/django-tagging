@@ -65,7 +65,7 @@ def search_autocomplete(request):
     tag_list = [] 
     for t in tags:
         tag_list.append({"caption": t.name, "value": t.slug})
-    dump = json.dumps([tag_list])
+    dump = json.dumps(tag_list)
     return HttpResponse(dump, mimetype="text/plain")
-    return HttpResponse('[{"caption":"abdi ibrahim","value":5}]', mimetype="text/plain")
+#    return HttpResponse('[{"caption":"abdi ibrahim","value":5}]', mimetype="text/plain")
     
