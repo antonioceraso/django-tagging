@@ -53,9 +53,6 @@ def tagged_object_list(request, queryset_or_model=None, tag=None,
     return object_list(request, queryset, **kwargs)
 
 
-def search(request):
-    pass
-
 def search_autocomplete(request):
     return HttpResponse('[{"caption":"abdi ibrahim","value":5}]', mimetype="text/plain")
     
