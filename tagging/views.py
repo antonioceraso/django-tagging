@@ -61,7 +61,7 @@ def tagged_object_list(request, queryset_or_model=None, tag=None,
 def search_autocomplete(request):
     q = request.GET.get('tag')
     if q:
-        tags = Tag.objects.filter(name__icontains=q).order_by('-count')[:20]
+        tags = Tag.objects.filter(name__icontains=q).order_by('-usage')[:20]
     tag_dict = {}
     for t in tags:
         tag_dict.update({"caption": t.name, "value": t.value})
