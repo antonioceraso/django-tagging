@@ -5,8 +5,10 @@ from django.http import Http404
 from django.utils.translation import ugettext as _
 from django.views.generic.list_detail import object_list
 from django.http import HttpResponse
+from django.contrib.contenttypes.models import ContentType
+from django.shortcuts import get_object_or_404
 
-from tagging.models import Tag, TaggedItem
+from tagging.models import Tag, TaggedItem, RelatedTag
 from tagging.utils import get_tag, get_queryset_and_model
 
 try:
@@ -14,47 +16,45 @@ try:
 except ImportError:
     import simplejson as json
 
-def tagged_object_list(request, queryset_or_model=None, tag=None,
-        related_tags=False, related_tag_counts=True, **kwargs):
+def tagged_item_list(request, queryset_or_model=None, tag_slug=None, 
+                     content_type_id=None, **kwargs):
     """
-    A thin wrapper around
-    ``django.views.generic.list_detail.object_list`` which creates a
-    ``QuerySet`` containing instances of the given queryset or model
-    tagged with the given tag.
+    A thin wrapper around ``list_detail.object_list`` which returns a
+    ``QuerySet`` containing instances of TaggedItem.
 
     In addition to the context variables set up by ``object_list``, a
     ``tag`` context variable will contain the ``Tag`` instance for the
     tag.
-
-    If ``related_tags`` is ``True``, a ``related_tags`` context variable
-    will contain tags related to the given tag for the given model.
-    Additionally, if ``related_tag_counts`` is ``True``, each related
-    tag will have a ``count`` attribute indicating the number of items
-    which have it in addition to the given tag.
     """
-    if queryset_or_model is None:
-        try:
-            queryset_or_model = kwargs.pop('queryset_or_model')
-        except KeyError:
-            raise AttributeError(_('tagged_object_list must be called with a queryset or a model.'))
 
-    if tag is None:
-        try:
-            tag = kwargs.pop('tag')
-        except KeyError:
-            raise AttributeError(_('tagged_object_list must be called with a tag.'))
+    tag_slug = tag_slug or kwargs.get('tag')
+    tag = get_object_or_404(Tag, slug=tag_slug)
 
-    tag_instance = get_tag(tag)
-    if tag_instance is None:
-        raise Http404(_('No Tag found matching "%s".') % tag)
-    queryset = TaggedItem.objects.get_by_model(queryset_or_model, tag_instance)
+    # check if is forwarded
+    try:
+        forward_tag = RelatedTag.objects.get(tag=tag, relation_type='=>')
+    except RelatedTag.DoesNotExist:
+        pass
+    else:
+        return HttpResponseRedirect(forward_tag.related_tag.get_absolute_url)
+    
+    ctype = None
+    queryset_or_model = queryset_or_model or kwargs.get('queryset_or_model')
+    if queryset_or_model:
+        ctype = ContentType.objects.get_for_model(queryset_or_model)
+    else:
+        content_type_id = content_type_id or kwargs.get('content_type_id')
+        if content_type_id:
+            ctype = get_object_or_404(ContentType, id=content_type_id)
+    
+    queryset = TaggedItem.objects.filter(tag=tag)
+    if ctype:
+        queryset = TaggedItem.objects.filter(content_type=ctype)
+
     if not kwargs.has_key('extra_context'):
         kwargs['extra_context'] = {}
-    kwargs['extra_context']['tag'] = tag_instance
-    if related_tags:
-        kwargs['extra_context']['related_tags'] = \
-            Tag.objects.related_for_model(tag_instance, queryset_or_model,
-                                          counts=related_tag_counts)
+    kwargs['extra_context']['tag'] = tag
+
     return object_list(request, queryset, **kwargs)
 
 
@@ -67,4 +67,4 @@ def search_autocomplete(request):
         for t in tags:
             tag_list.append({"caption": t.name, "value": t.slug})
         dump = json.dumps(tag_list)
-    return     HttpResponse(dump, mimetype="text/plain")
+    return HttpResponse(dump, mimetype="text/plain")

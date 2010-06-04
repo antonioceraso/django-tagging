@@ -469,7 +469,11 @@ class Tag(models.Model):
     def save(self, *args, **kwargs):
         self.slug = slugify(self.name)
         super(Tag, self).save(*args, **kwargs)
-        
+    
+    @models.permalink
+    def get_absolute_url(self):
+        return ('tag_detail', (), {'tag_slug': self.slug})
+    
     def get_related(self, relation_type=None):
         """
         Returns the related tags of the tag instance. 

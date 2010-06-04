@@ -80,7 +80,6 @@ class TagField(TextField):
     def _save(self, **kwargs): #signal, sender, instance):
         """
         Save tags back to the database
-        
         """
         tags = self._get_instance_tag_cache(kwargs['instance'])
         Tag.objects.update_tags(kwargs['instance'], tags)
