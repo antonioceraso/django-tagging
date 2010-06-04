@@ -597,6 +597,9 @@ REVERSE_RELATIONS = {'<': '>', '>': '<',
                      '0': '+', '+': '0',
                      '=>': '<=', '<=': '=>'}
 
+class InvalidTagRelation(Exception):
+    pass
+
 class RelatedTag(models.Model):
     tag = models.ForeignKey(Tag)
     related_tag = models.ForeignKey(Tag, related_name='_not_used_(symmetrical)_')
@@ -612,16 +615,24 @@ class RelatedTag(models.Model):
         reverse relations are created/updated here
         '''
         if self.tag != self.related_tag: # cannot relate a tag with itself
-            super(RelatedTag, self).save(**kwargs)
-            # get the reverse type; if does not exist, reverse = original
-            reverse_rel_type = REVERSE_RELATIONS.get(self.relation_type, self.relation_type)
-            rev, created = RelatedTag.objects.get_or_create(tag=self.related_tag, related_tag=self.tag,
-                                                            defaults={'relation_type': reverse_rel_type})
-            if not created:
-                # reverse already exists, check the relation type and update if necessary
-                if rev.relation_type != reverse_rel_type:
-                    rev.relation_type = reverse_rel_type
-                    rev.save()
+            if self.relation_type == '=>' or '<=':
+                if self.relation_type == '=>':
+                    qs = RelatedTag.objects.get(tag=self.tag, relation_type='=>')
+                else: # '<='
+                    qs = RelatedTag.objects.get(tag=self.related_tag, relation_type='=>')
+                if qs.count() > 0:
+                    raise InvalidTagRelation(_('A Tag cannot have more than 1 preferred synonyms'))
+                else:
+                    super(RelatedTag, self).save(**kwargs)
+                    # get the reverse type; if does not exist, reverse = original
+                    reverse_rel_type = REVERSE_RELATIONS.get(self.relation_type, self.relation_type)
+                    rev, created = RelatedTag.objects.get_or_create(tag=self.related_tag, related_tag=self.tag,
+                                                                    defaults={'relation_type': reverse_rel_type})
+                    if not created:
+                        # reverse already exists, check the relation type and update if necessary
+                        if rev.relation_type != reverse_rel_type:
+                            rev.relation_type = reverse_rel_type
+                            rev.save()
     
     def delete(self, **kwargs):
         '''
