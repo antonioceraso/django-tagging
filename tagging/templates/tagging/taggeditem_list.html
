@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+	{% for tagged_item in object_list %}
+		{{ tagged_item.object }}
+		<br>
+	{% endfor %}
+
+{% endblock %}
