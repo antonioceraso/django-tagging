@@ -36,7 +36,6 @@ setup(
     url = 'http://github.com/teknolab/teknolab-django-tagging',
     packages = ['tagging', 'tagging.templatetags', 'tagging.tests', 
                 'tagging.templates', 'tagging.templates.tagging'],
-    data_files = data_files,
     classifiers = ['Development Status :: 4 - Beta',
                    'Environment :: Web Environment',
                    'Framework :: Django',
