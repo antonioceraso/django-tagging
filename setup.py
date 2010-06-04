@@ -29,33 +29,13 @@ def fullsplit(path, result=None):
 for scheme in INSTALL_SCHEMES.values():
     scheme['data'] = scheme['purelib']
 
-# Compile the list of packages available, because distutils doesn't have
-# an easy way to do this.
-packages, data_files = [], []
-root_dir = os.path.dirname(__file__)
-tagging_dir = os.path.join(root_dir, 'tagging')
-pieces = fullsplit(root_dir)
-if pieces[-1] == '':
-    len_root_dir = len(pieces) - 1
-else:
-    len_root_dir = len(pieces)
-
-for dirpath, dirnames, filenames in os.walk(tagging_dir):
-    # Ignore dirnames that start with '.'
-    for i, dirname in enumerate(dirnames):
-        if dirname.startswith('.'): del dirnames[i]
-    if '__init__.py' in filenames:
-        packages.append('.'.join(fullsplit(dirpath)[len_root_dir:]))
-    elif filenames:
-        data_files.append([dirpath, [os.path.join(dirpath, f) for f in filenames]])
-
-
 setup(
     name = 'teknolab-django-tagging',
     version = tagging.get_version(),
     description = 'Generic tagging application for Django',
     url = 'http://github.com/teknolab/teknolab-django-tagging',
-    packages = packages,
+    packages = ['tagging', 'tagging.templatetags', 'tagging.tests', 
+                'tagging.templates', 'tagging.templates.tagging'],
     data_files = data_files,
     classifiers = ['Development Status :: 4 - Beta',
                    'Environment :: Web Environment',
