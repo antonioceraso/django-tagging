@@ -3,7 +3,8 @@
 {% block content %}
 
 	{% for tagged_item in object_list %}
-		{{ tagged_item.object }}
+		<a href="{{ tagged_item.object.get_absolute_url }}">{{ tagged_item.object }}</a> 
+		({{ tagged_item.content_type }})
 		<br>
 	{% endfor %}
 
