@@ -58,7 +58,7 @@ def tagged_item_list(request, queryset_or_model=None, tag_slug=None,
     return object_list(request, queryset, **kwargs)
 
 
-def search_autocomplete(request):
+def search_autocomplete(request, category_slug):
     q = request.GET.get('tag')
     dump = ''
     if q:

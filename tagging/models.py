@@ -6,8 +6,10 @@ from datetime import datetime
 
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.auth.decorators import permission_required
 from django.db import connection, models
 from django.db.models.query import QuerySet
+from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy as _
 from django.template.defaultfilters import slugify
 
@@ -22,6 +24,7 @@ qn = connection.ops.quote_name
 ############
 
 class TagManager(models.Manager):
+    @method_decorator(permission_required('tagging.can_update_tags'))
     def update_tags(self, obj, tag_names):
         """
         Update tags associated with an object.
