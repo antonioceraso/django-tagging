@@ -19,13 +19,14 @@ class TagField(TextField):
     """
     def __init__(self, *args, **kwargs):
         kwargs['blank'] = kwargs.get('blank', True)
-        kwargs['default'] = kwargs.get('default', '')        
+        kwargs['default'] = kwargs.get('default', '')
         self.category = kwargs.get('category')
         self.relate = kwargs.get('relate', True)
+        self.max_count = kwargs.get('max_count', True)
 
         # clean the extra fields
         for k in kwargs.keys():
-            if k in ('category', 'relate'):
+            if k in ('category', 'relate', 'max_count'):
                 del(kwargs[k])
 
         super(TagField, self).__init__(*args, **kwargs)
@@ -129,6 +130,7 @@ class TagField(TextField):
 
     def formfield(self, **kwargs):
         from tagging import forms
-        defaults = {'form_class': forms.TagField}
+        defaults = {'form_class': forms.TagField,
+                    'max_count': self.max_count}
         defaults.update(kwargs)
         return super(TagField, self).formfield(**defaults)

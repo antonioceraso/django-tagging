@@ -31,12 +31,21 @@ class TagField(forms.CharField):
     def __init__(self, *args, **kwargs):
         super(TagField, self).__init__(*args, **kwargs)
         self.widget = forms.TextInput(attrs={'class':'tag_field'})
+        self.max_count = kwargs.get('max_count', True)
+
+        # clean the extra fields
+        for k in kwargs.keys():
+            if k in ('max_count',):
+                del(kwargs[k])
 
     def clean(self, value):
         value = super(TagField, self).clean(value)
         if value == u'':
             return value
-        for tag_name in parse_tag_input(value):
+        tags = parse_tag_input(value)
+        if self.max_count and len(tags) > self.max_count: 
+            raise forms.ValidationError(_('This item can have %s tags maximum.') % self.max_count)
+        for tag_name in tags:
             if len(tag_name) > settings.MAX_TAG_LENGTH:
                 raise forms.ValidationError(
                     _('Each tag may be no more than %s characters long.') %
