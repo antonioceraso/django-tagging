@@ -14,7 +14,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.template.defaultfilters import slugify
 
 from tagging import settings
-from tagging.utils import calculate_cloud, get_tag, get_or_create_tag, get_tag_list, get_queryset_and_model, parse_tag_input
+from tagging.utils import calculate_cloud, get_tag, get_tag_list, get_queryset_and_model, parse_tag_input
 from tagging.utils import LOGARITHMIC
 
 qn = connection.ops.quote_name
@@ -624,9 +624,9 @@ class RelatedTag(models.Model):
         if self.tag != self.related_tag: # cannot relate a tag with itself
             if self.relation_type == '=>' or '<=':
                 if self.relation_type == '=>':
-                    qs = RelatedTag.objects.get(tag=self.tag, relation_type='=>')
+                    qs = RelatedTag.objects.filter(tag=self.tag, relation_type='=>')
                 else: # '<='
-                    qs = RelatedTag.objects.get(tag=self.related_tag, relation_type='=>')
+                    qs = RelatedTag.objects.filter(tag=self.related_tag, relation_type='=>')
                 if qs.count() > 0:
                     raise InvalidTagRelation(_('A Tag cannot have more than 1 preferred synonyms'))
                 else:
@@ -661,7 +661,7 @@ class Term(models.Model):
     def __unicode__(self):
         return ', '.join([t.name for t in self.tags])
 
-    
+
 class TermTag(models.Model):
     term = models.ForeignKey(Term)
     tag = models.ForeignKey(Tag)
