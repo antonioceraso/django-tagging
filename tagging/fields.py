@@ -19,6 +19,7 @@ class TagField(TextField):
     """
     def __init__(self, *args, **kwargs):
         kwargs['blank'] = kwargs.get('blank', True)
+        kwargs['null'] = kwargs.get('blank', True)
         kwargs['default'] = kwargs.get('default', '')
         self.category = kwargs.get('category')
         self.relate = kwargs.get('relate', True)
