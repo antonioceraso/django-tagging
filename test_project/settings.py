@@ -17,6 +17,7 @@ INSTALLED_APPS = (
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'tagging',
+    'test_app',
 )
 
 ROOT_URLCONF = 'urls'

@@ -5,10 +5,16 @@ from django.db.models import signals
 from django.db.models.fields import TextField
 from django.utils.translation import ugettext_lazy as _
 from django.template.defaultfilters import slugify
-
+from django.core.exceptions import ValidationError
 from tagging import settings
 from tagging.models import Tag, RelatedTag
 from tagging.utils import edit_string_for_tags, get_tag_list
+
+
+def max_count_validator(value):
+    count = len(get_tag_list(value))
+    if count > settings.MAX_TAG_COUNT:
+        raise ValidationError(_('This item can have %s tags maximum (%s supplied)') % (settings.MAX_TAG_COUNT, count))
 
 
 class TagField(TextField):
@@ -23,13 +29,14 @@ class TagField(TextField):
         kwargs['default'] = kwargs.get('default', '')
         self.category = kwargs.get('category')
         self.relate = kwargs.get('relate', True)
-        self.max_count = kwargs.get('max_count', True)
+        self.max_count = kwargs.get('max_count')
+        if self.max_count:
+            self.validators.append = max_count_validator
 
         # clean the extra fields
         for k in kwargs.keys():
             if k in ('category', 'relate', 'max_count'):
                 del(kwargs[k])
-
         super(TagField, self).__init__(*args, **kwargs)
 
     def contribute_to_class(self, cls, name):
@@ -131,7 +138,6 @@ class TagField(TextField):
 
     def formfield(self, **kwargs):
         from tagging import forms
-        defaults = {'form_class': forms.TagField,
-                    'max_count': self.max_count}
+        defaults = {'form_class': forms.TagField}
         defaults.update(kwargs)
         return super(TagField, self).formfield(**defaults)

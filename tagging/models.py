@@ -24,7 +24,7 @@ qn = connection.ops.quote_name
 ############
 
 class TagManager(models.Manager):
-    @method_decorator(permission_required('tagging.can_update_tags'))
+#    @method_decorator(permission_required('tagging.can_update_tags'))
     def update_tags(self, obj, tag_names):
         """
         Update tags associated with an object.
