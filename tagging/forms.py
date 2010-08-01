@@ -1,9 +1,5 @@
-"""
-Tagging components for Django's form library.
-"""
 from django import forms
 from django.utils.translation import ugettext as _
-
 from tagging import settings
 from tagging.models import Tag
 from tagging.utils import parse_tag_input
@@ -23,6 +19,7 @@ class TagAdminForm(forms.ModelForm):
                     settings.MAX_TAG_LENGTH)
         return value
 
+
 class TagField(forms.CharField):
     """
     A ``CharField`` which validates that its input is a valid list of
@@ -31,19 +28,3 @@ class TagField(forms.CharField):
     def __init__(self, *args, **kwargs):
         super(TagField, self).__init__(*args, **kwargs)
         self.widget = forms.TextInput(attrs={'class':'tag_field'})
-
-        # clean the extra fields
-        for k in kwargs.keys():
-            if k in ('max_count',):
-                del(kwargs[k])
-
-    def clean(self, value):
-        value = super(TagField, self).clean(value)
-        if value == u'':
-            return value
-        tags = parse_tag_input(value)
-        for tag_name in tags:
-            if len(tag_name) > settings.MAX_TAG_LENGTH:
-                raise forms.ValidationError(
-                    _('Each tag may be no more than %s characters long.') % settings.MAX_TAG_LENGTH)
-        return value

@@ -14,7 +14,14 @@ from tagging.utils import edit_string_for_tags, get_tag_list
 def max_count_validator(value):
     count = len(get_tag_list(value))
     if count > settings.MAX_TAG_COUNT:
-        raise ValidationError(_('This item can have %s tags maximum (%s supplied)') % (settings.MAX_TAG_COUNT, count))
+        raise ValidationError(_('This item can have %s tags maximum (%s given)') % (settings.MAX_TAG_COUNT, count))
+
+def max_length_validator(value):
+    tags = parse_tag_input(value)
+    for tag_name in tags:
+        if len(tag_name) > settings.MAX_TAG_LENGTH:
+            raise forms.ValidationError(
+                _('Each tag may be no more than %s characters long.') % settings.MAX_TAG_LENGTH)
 
 
 class TagField(TextField):
@@ -29,13 +36,12 @@ class TagField(TextField):
         kwargs['default'] = kwargs.get('default', '')
         self.category = kwargs.get('category')
         self.relate = kwargs.get('relate', True)
-        self.max_count = kwargs.get('max_count')
-        if self.max_count:
-            self.validators.append = max_count_validator
+        self.validators = [max_count_validator,
+                           max_length_validator]
 
         # clean the extra fields
         for k in kwargs.keys():
-            if k in ('category', 'relate', 'max_count'):
+            if k in ('category', 'relate'):
                 del(kwargs[k])
         super(TagField, self).__init__(*args, **kwargs)
 
