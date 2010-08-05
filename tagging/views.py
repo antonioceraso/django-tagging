@@ -7,7 +7,7 @@ from django.views.generic.list_detail import object_list
 from django.http import HttpResponse
 from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import get_object_or_404
-
+from django.db.models import Count
 from tagging.models import Tag, TaggedItem, RelatedTag
 from tagging.utils import get_tag, get_queryset_and_model
 
@@ -25,6 +25,9 @@ def tagged_item_list(request, queryset_or_model=None, tag_slug=None,
     In addition to the context variables set up by ``object_list``, a
     ``tag`` context variable will contain the ``Tag`` instance for the
     tag.
+    
+    If ``queryset_or_model`` or ``content_type_id`` is not given, all types
+    of content will be returned
     """
 
     tag_slug = tag_slug or kwargs.get('tag')
@@ -48,13 +51,22 @@ def tagged_item_list(request, queryset_or_model=None, tag_slug=None,
             ctype = get_object_or_404(ContentType, id=content_type_id)
     
     queryset = TaggedItem.objects.filter(tag=tag)
+
     if ctype:
         queryset = TaggedItem.objects.filter(content_type=ctype)
+
+    # get all content types with count for this tag to add to extra_context
+    content_types = TaggedItem.objects.filter(tag=tag).values('content_type').distinct().\
+                    annotate(count=Count('content_type')) 
+    for ct in content_types:
+        ct['id'] = ct['content_type']
+        ct['content_type'] = ContentType.objects.get_for_id(ct['content_type'])
 
     if not kwargs.has_key('extra_context'):
         kwargs['extra_context'] = {}
     kwargs['extra_context']['tag'] = tag
-
+    kwargs['extra_context']['content_types'] = content_types
+    
     return object_list(request, queryset, **kwargs)
 
 
@@ -68,3 +80,5 @@ def search_autocomplete(request, category_slug):
             tag_list.append({"caption": t.name, "value": t.slug})
         dump = json.dumps(tag_list)
     return HttpResponse(dump, mimetype="text/plain")
+
+
