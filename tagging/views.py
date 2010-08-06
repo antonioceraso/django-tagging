@@ -55,7 +55,7 @@ def tagged_item_list(request, queryset_or_model=None, tag_slug=None,
     if ctype:
         queryset = TaggedItem.objects.filter(content_type=ctype)
 
-    # get all content types with count for this tag to add to extra_context
+    # get all content types with count for this tag to add to the template context
     content_types = TaggedItem.objects.filter(tag=tag).values('content_type').distinct().\
                     annotate(count=Count('content_type')) 
     for ct in content_types:
