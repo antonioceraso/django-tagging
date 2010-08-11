@@ -483,7 +483,7 @@ class Tag(models.Model):
         If the relation type is not specified, all related tags
         except the ones of type '!' (not related) are returned.
         """
-        tags = Tag.objects.filter(is_valid=True).filter(related_tag__tag=self).exclude(pk=self.id)
+        tags = Tag.objects.filter(is_valid=True).filter(relatedtag__tag=self).exclude(pk=self.id)
         if relation_type:
             tags = tags.filter(relatedtag__relation_type=relation_type)
         else:
