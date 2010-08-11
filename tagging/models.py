@@ -488,7 +488,7 @@ class Tag(models.Model):
             tags = tags.filter(relatedtag__relation_type=relation_type)
         else:
             tags = tags.filter(relatedtag__relation_type__in=['~', '>', '<'])
-        return tags
+        return tags.distinct()
 
     class Meta:
         ordering = ('name',)
