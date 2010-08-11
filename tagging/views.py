@@ -44,16 +44,16 @@ def tagged_item_list(request, queryset_or_model=None, tag_slug=None,
     ctype = None
     queryset_or_model = queryset_or_model or kwargs.get('queryset_or_model')
     if queryset_or_model:
-        ctype = ContentType.objects.get_for_model(queryset_or_model)
+        queryset, model = get_queryset_and_model(queryset_or_model)
+        ctype = ContentType.objects.get_for_model(model)
     else:
         content_type_id = content_type_id or kwargs.get('content_type_id')
         if content_type_id:
             ctype = get_object_or_404(ContentType, id=content_type_id)
     
-    queryset = TaggedItem.objects.filter(tag=tag)
-
+    qs = TaggedItem.objects.filter(tag=tag)
     if ctype:
-        queryset = TaggedItem.objects.filter(content_type=ctype)
+        qs = TaggedItem.objects.filter(content_type=ctype)
 
     # get all content types with count for this tag to add to the template context
     content_types = TaggedItem.objects.filter(tag=tag).values('content_type').distinct().\
