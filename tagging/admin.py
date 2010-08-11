@@ -14,7 +14,7 @@ class RelatedTagAdmin(admin.ModelAdmin):
     list_display = ('tag', 'relation_type', 'related_tag', 'added', 'count')
     list_filter = ('relation_type',)
     list_editable = ('relation_type',)
-    search_fields = ('tag__name', 'related_tag__name')
+    search_fields = ('tag__name',)
     
     def get_actions(self, request):
         # do not let deletion of relations, instead set relation_type to '!'
