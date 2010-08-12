@@ -26,5 +26,5 @@ class TagField(forms.CharField):
     tag names.
     """
     def __init__(self, *args, **kwargs):
-        super(TagField, self).__init__(*args, **kwargs)
         self.widget = forms.TextInput(attrs={'class':'tag_field'})
+        super(TagField, self).__init__(*args, **kwargs)
