@@ -25,6 +25,6 @@ class TagField(forms.CharField):
     A ``CharField`` which validates that its input is a valid list of
     tag names.
     """
-    def __init__(self, *args, **kwargs):
-        self.widget = forms.TextInput(attrs={'class':'tag_field'})
-        super(TagField, self).__init__(*args, **kwargs)
+    widget = forms.TextInput
+    def widget_attrs(self, widget): 
+        return {'class': 'tag_field'}
