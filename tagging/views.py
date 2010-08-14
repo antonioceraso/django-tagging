@@ -12,9 +12,10 @@ from tagging.models import Tag, TaggedItem, RelatedTag
 from tagging.utils import get_tag, get_queryset_and_model
 
 try:
-    import json # comes with python 2.6
+    import json # python 2.6
 except ImportError:
-    import simplejson as json
+    import simplejson as json # python < 2.6
+
 
 def tagged_item_list(request, queryset_or_model=None, tag_slug=None, 
                      content_type_id=None, **kwargs):
@@ -23,49 +24,17 @@ def tagged_item_list(request, queryset_or_model=None, tag_slug=None,
     ``QuerySet`` containing instances of TaggedItem.
 
     In addition to the context variables set up by ``object_list``, a
-    ``tag`` context variable will contain the ``Tag`` instance for the
-    tag.
-    
-    If ``queryset_or_model`` or ``content_type_id`` is not given, all types
-    of content will be returned
+    ``tags`` context variable will contain the ``Tag`` instances.
     """
-
-    tag_slug = tag_slug or kwargs.get('tag')
-    tag = get_object_or_404(Tag, slug=tag_slug)
-
-    # check if is forwarded
-    try:
-        forward_tag = RelatedTag.objects.get(tag=tag, relation_type='=>')
-    except RelatedTag.DoesNotExist:
-        pass
-    else:
-        return HttpResponseRedirect(forward_tag.related_tag.get_absolute_url)
     
-    ctype = None
-    queryset_or_model = queryset_or_model or kwargs.get('queryset_or_model')
-    if queryset_or_model:
-        queryset, model = get_queryset_and_model(queryset_or_model)
-        ctype = ContentType.objects.get_for_model(model)
-    else:
-        content_type_id = content_type_id or kwargs.get('content_type_id')
-        if content_type_id:
-            ctype = get_object_or_404(ContentType, id=content_type_id)
+    tag_slug = tag_slug or kwargs.get('tag')
+    tags = get_tags_from_slug(tag_slug)
 
-    queryset = TaggedItem.objects.filter(tag=tag)
-    if ctype:
-        queryset = TaggedItem.objects.filter(content_type=ctype)
-
-    # get all content types with count for this tag to add to the template context
-    content_types = TaggedItem.objects.filter(tag=tag).values('content_type').distinct().\
-                    annotate(count=Count('content_type')) 
-    for ct in content_types:
-        ct['id'] = ct['content_type']
-        ct['content_type'] = ContentType.objects.get_for_id(ct['content_type'])
+    queryset = TaggedItem.objects.get_intersection_by_model(queryset_or_model, tags)
 
     if not kwargs.has_key('extra_context'):
         kwargs['extra_context'] = {}
-    kwargs['extra_context']['tag'] = tag
-    kwargs['extra_context']['content_types'] = content_types
+    kwargs['extra_context']['tags'] = tags
     
     return object_list(request, queryset, **kwargs)
 

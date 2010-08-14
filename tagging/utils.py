@@ -6,6 +6,7 @@ import math
 import types
 
 from django.db.models.query import QuerySet
+from django.contrib.contenttypes.models import ContentType
 from django.utils.encoding import force_unicode
 from django.utils.translation import ugettext as _
 from django.template.defaultfilters import slugify
@@ -264,3 +265,21 @@ def calculate_cloud(tags, steps=4, distribution=LOGARITHMIC):
                     tag.font_size = i + 1
                     font_set = True
     return tags
+
+def get_content_types(tag):
+    """
+    returns all content types and object counts for this tag
+    """
+    content_types = TaggedItem.objects.filter(tag=tag).values('content_type').distinct().\
+                    annotate(count=Count('content_type')) 
+    for ct in content_types:
+        ct['id'] = ct['content_type']
+        ct['content_type'] = ContentType.objects.get_for_id(ct['content_type'])
+    return ct
+
+def get_tags_from_slug(tag_slug):
+    tags = []
+    for slug in tag_slug.split('+'):
+        tags.append(get_object_or_404(Tag, slug=tag_slug))
+    return tags
+

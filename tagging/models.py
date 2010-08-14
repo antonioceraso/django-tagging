@@ -584,7 +584,17 @@ class RelatedTagManager(models.Manager):
                                     if not c:
                                         rel.count += 1
                                         rel.save()
-                                        
+    
+    def get_related(self, tags):
+        """
+        Takes a list of tags and returns tags that are related to all of them
+        """ 
+        if isinstance(tags, Tag):
+            tags = [tags]
+        result_tags = Tag.objects.all().distinct()
+        for tag in tags:
+            result_tags = result_tags & tag.get_related()
+        return result_tags
                                     
         
 RELATION_CHOICES = (('!', _('! (not related)')),
