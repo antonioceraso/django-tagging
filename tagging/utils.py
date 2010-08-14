@@ -6,10 +6,12 @@ import math
 import types
 
 from django.db.models.query import QuerySet
+from django.db.models import Count
 from django.contrib.contenttypes.models import ContentType
 from django.utils.encoding import force_unicode
 from django.utils.translation import ugettext as _
 from django.template.defaultfilters import slugify
+from django.shortcuts import get_object_or_404
 
 
 def parse_tag_input(input):
@@ -266,20 +268,24 @@ def calculate_cloud(tags, steps=4, distribution=LOGARITHMIC):
                     font_set = True
     return tags
 
-def get_content_types(tag):
+def get_content_types(tags):
     """
-    returns all content types and object counts for this tag
+    returns all content types that are tagged with all tags
     """
-    content_types = TaggedItem.objects.filter(tag=tag).values('content_type').distinct().\
-                    annotate(count=Count('content_type')) 
+    from tagging.models import TaggedItem
+    tagged_items = TaggedItem.objects.all()
+    for tag in tags:
+        tagged_items = tagged_items & TaggedItem.objects.filter(tag=tag)
+    content_types = tagged_items.values('content_type').distinct().annotate(count=Count('content_type'))
     for ct in content_types:
         ct['id'] = ct['content_type']
         ct['content_type'] = ContentType.objects.get_for_id(ct['content_type'])
-    return ct
+    return content_types
 
 def get_tags_from_slug(tag_slug):
+    from tagging.models import Tag
     tags = []
     for slug in tag_slug.split('+'):
-        tags.append(get_object_or_404(Tag, slug=tag_slug))
+        tags.append(get_object_or_404(Tag, slug=slug))
     return tags
 

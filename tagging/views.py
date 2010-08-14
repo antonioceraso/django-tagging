@@ -9,7 +9,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import get_object_or_404
 from django.db.models import Count
 from tagging.models import Tag, TaggedItem, RelatedTag
-from tagging.utils import get_tag, get_queryset_and_model
+from tagging.utils import get_tag, get_queryset_and_model, get_tags_from_slug
 
 try:
     import json # python 2.6

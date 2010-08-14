@@ -14,8 +14,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.template.defaultfilters import slugify
 
 from tagging import settings
-from tagging.utils import calculate_cloud, get_tag, get_tag_list, get_queryset_and_model, parse_tag_input
-from tagging.utils import LOGARITHMIC
+from tagging.utils import calculate_cloud, get_tag, get_tag_list, get_queryset_and_model, parse_tag_input, LOGARITHMIC
 
 qn = connection.ops.quote_name
 
@@ -295,7 +294,7 @@ class TaggedItemManager(models.Manager):
             queryset, model = get_queryset_and_model(queryset_or_model)
             return model._default_manager.none()
         elif tag_count == 1:
-            # Optimisation for single tag - fall through to the simpler
+            # Optimization for single tag - fall through to the simpler
             # query below.
             tag = tags[0]
         else:
@@ -589,8 +588,7 @@ class RelatedTagManager(models.Manager):
         """
         Takes a list of tags and returns tags that are related to all of them
         """ 
-        if isinstance(tags, Tag):
-            tags = [tags]
+        tags = get_tag_list(tags)
         result_tags = Tag.objects.all().distinct()
         for tag in tags:
             result_tags = result_tags & tag.get_related()
