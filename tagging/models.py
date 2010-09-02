@@ -297,24 +297,24 @@ class TaggedItemManager(models.Manager):
             # Optimization for single tag - fall through to the simpler
             # query below.
             tag = tags[0]
+            queryset, model = get_queryset_and_model(queryset_or_model)
+            content_type = ContentType.objects.get_for_model(model)
+            db_table = self.model._meta.db_table
+            tagged_item_table = qn(db_table)
+            return queryset.extra(
+                tables=[db_table],
+                where=[
+                    '%s.content_type_id = %%s' % tagged_item_table,
+                    '%s.tag_id = %%s' % tagged_item_table,
+                    '%s.%s = %s.object_id' % (qn(model._meta.db_table),
+                                              qn(model._meta.pk.column),
+                                              tagged_item_table)
+                ],
+                params=[content_type.pk, tag.pk],
+            )
         else:
             return self.get_intersection_by_model(queryset_or_model, tags)
 
-        queryset, model = get_queryset_and_model(queryset_or_model)
-        content_type = ContentType.objects.get_for_model(model)
-        opts = self.model._meta
-        tagged_item_table = qn(opts.db_table)
-        return queryset.extra(
-            tables=[opts.db_table],
-            where=[
-                '%s.content_type_id = %%s' % tagged_item_table,
-                '%s.tag_id = %%s' % tagged_item_table,
-                '%s.%s = %s.object_id' % (qn(model._meta.db_table),
-                                          qn(model._meta.pk.column),
-                                          tagged_item_table)
-            ],
-            params=[content_type.pk, tag.pk],
-        )
 
     def get_intersection_by_model(self, queryset_or_model, tags):
         """
@@ -584,14 +584,14 @@ class RelatedTagManager(models.Manager):
                                         rel.count += 1
                                         rel.save()
     
-    def get_related(self, tags):
+    def get_related(self, tags, relation_type=None):
         """
         Takes a list of tags and returns tags that are related to all of them
         """ 
         tags = get_tag_list(tags)
         result_tags = Tag.objects.all().distinct()
         for tag in tags:
-            result_tags = result_tags & tag.get_related()
+            result_tags = result_tags & tag.get_related(relation_type=relation_type)
         return result_tags
                                     
         

@@ -13,3 +13,5 @@ MAX_TAG_LENGTH = getattr(settings, 'MAX_TAG_LENGTH', 50)
 FORCE_LOWERCASE_TAGS = getattr(settings, 'FORCE_LOWERCASE_TAGS', True)
 
 MAX_TAG_COUNT = getattr(settings, 'MAX_TAG_COUNT', 10)
+
+TAGGING_APP_MAP = getattr(settings, 'TAGGING_APP_MAP', {})

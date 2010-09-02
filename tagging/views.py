@@ -10,6 +10,7 @@ from django.shortcuts import get_object_or_404
 from django.db.models import Count
 from tagging.models import Tag, TaggedItem, RelatedTag
 from tagging.utils import get_tag, get_queryset_and_model, get_tags_from_slug
+from tagging import settings
 
 try:
     import json # python 2.6
@@ -18,7 +19,7 @@ except ImportError:
 
 
 def tagged_item_list(request, queryset_or_model=None, tag_slug=None, 
-                     content_type_id=None, **kwargs):
+                     content_type_id=None, app_name=None, **kwargs):
     """
     A thin wrapper around ``list_detail.object_list`` which returns a
     ``QuerySet`` containing instances of TaggedItem.
@@ -29,12 +30,21 @@ def tagged_item_list(request, queryset_or_model=None, tag_slug=None,
     
     tag_slug = tag_slug or kwargs.get('tag')
     tags = get_tags_from_slug(tag_slug)
+    
+    if not queryset_or_model:
+        if app_name:
+            app_label, model_name = settings.TAGGING_APP_MAP[app_name].split('.')
+            content_type_id = ContentType.objects.get_by_natural_key(app_label, model_name).id
+        if content_type_id:
+            queryset_or_model = ContentType.objects.get_for_id(content_type_id).model_class()
 
-    queryset = TaggedItem.objects.get_intersection_by_model(queryset_or_model, tags)
+    queryset = TaggedItem.objects.get_by_model(queryset_or_model, tags)
 
     if not kwargs.has_key('extra_context'):
         kwargs['extra_context'] = {}
     kwargs['extra_context']['tags'] = tags
+    kwargs['extra_context']['tag_slug'] = tag_slug
+    kwargs['extra_context']['related_tags'] = RelatedTag.objects.get_related(tags)
     
     return object_list(request, queryset, **kwargs)
 
