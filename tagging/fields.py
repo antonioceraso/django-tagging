@@ -4,11 +4,10 @@ A custom Model Field for tagging.
 from django.db.models import signals
 from django.db.models.fields import TextField
 from django.utils.translation import ugettext_lazy as _
-from django.template.defaultfilters import slugify
 from django.core.exceptions import ValidationError
 from tagging import settings
 from tagging.models import Tag, RelatedTag
-from tagging.utils import edit_string_for_tags, get_tag_list
+from tagging.utils import edit_string_for_tags, get_tag_list, slugify
 
 
 def max_count_validator(value):

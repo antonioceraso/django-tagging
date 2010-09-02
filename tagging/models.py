@@ -11,10 +11,10 @@ from django.db import connection, models
 from django.db.models.query import QuerySet
 #from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy as _
-from django.template.defaultfilters import slugify
 
 from tagging import settings
-from tagging.utils import calculate_cloud, get_tag, get_tag_list, get_queryset_and_model, parse_tag_input, LOGARITHMIC
+from tagging.utils import calculate_cloud, get_tag, get_tag_list, get_queryset_and_model, \
+                          parse_tag_input, LOGARITHMIC, slugify
 
 qn = connection.ops.quote_name
 
