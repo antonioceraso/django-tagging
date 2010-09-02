@@ -4,15 +4,18 @@ calculation.
 """
 import math
 import types
-
+from unidecode import unidecode
 from django.db.models.query import QuerySet
 from django.db.models import Count
 from django.contrib.contenttypes.models import ContentType
 from django.utils.encoding import force_unicode
 from django.utils.translation import ugettext as _
-from django.template.defaultfilters import slugify
+from django.template.defaultfilters import slugify as slgfy
 from django.shortcuts import get_object_or_404
 
+
+def slugify(s):
+    return slgfy(unidecode(s))
 
 def parse_tag_input(input):
     """
