@@ -164,7 +164,8 @@ def get_tag_list(tags):
     elif isinstance(tags, QuerySet) and tags.model is Tag:
         return tags
     elif isinstance(tags, types.StringTypes):
-        return Tag.objects.filter(name__in=parse_tag_input(tags))
+        tag_list = parse_tag_input(tags)
+        return Tag.objects.filter(slug__in=[slugify(tag_name) for tag_name in tag_list])
     elif isinstance(tags, (types.ListType, types.TupleType)):
         if len(tags) == 0:
             return tags
@@ -206,7 +207,7 @@ def get_tag(tag):
 
     try:
         if isinstance(tag, types.StringTypes):
-            return Tag.objects.get(name=tag)
+            return Tag.objects.get(slug=slugify(tag))
         elif isinstance(tag, (types.IntType, types.LongType)):
             return Tag.objects.get(id=tag)
     except Tag.DoesNotExist:
@@ -267,20 +268,6 @@ def calculate_cloud(tags, steps=4, distribution=LOGARITHMIC):
                     tag.font_size = i + 1
                     font_set = True
     return tags
-
-def get_content_types(tags):
-    """
-    returns all content types that are tagged with all tags
-    """
-    from tagging.models import TaggedItem
-    tagged_items = TaggedItem.objects.all()
-    for tag in tags:
-        tagged_items = tagged_items & TaggedItem.objects.filter(tag=tag)
-    content_types = tagged_items.values('content_type').distinct().annotate(count=Count('content_type'))
-    for ct in content_types:
-        ct['id'] = ct['content_type']
-        ct['content_type'] = ContentType.objects.get_for_id(ct['content_type'])
-    return content_types
 
 def get_tags_from_slug(tag_slug):
     from tagging.models import Tag
