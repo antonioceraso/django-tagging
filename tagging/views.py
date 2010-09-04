@@ -45,6 +45,7 @@ def tagged_item_list(request, queryset_or_model=None, tag_slug=None,
     kwargs['extra_context']['tags'] = tags
     kwargs['extra_context']['tag_slug'] = tag_slug
     kwargs['extra_context']['related_tags'] = RelatedTag.objects.get_related(tags)
+    kwargs['extra_context']['app_name'] = app_name
     
     return object_list(request, queryset, **kwargs)
 

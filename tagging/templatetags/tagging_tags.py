@@ -58,6 +58,20 @@ class TaggedObjectsNode(Node):
             TaggedItem.objects.get_by_model(model, self.tag.resolve(context))
         return ''
 
+class TagSlugNode(Node):
+    def __init__(self, tags, exclude=None):
+        self.tags = Variable(tags)
+        self.exclude = exclude and Variable(exclude)
+
+    def render(self, context):
+        tags = self.tags.resolve(context)
+        exclude = self.exclude and self.exclude.resolve(context) or None
+        tag_slugs = []
+        for tag in tags:
+            if tag != exclude:
+                tag_slugs.append(tag.slug)
+        return '+'.join(tag_slugs)
+
 def do_tags_for_model(parser, token):
     """
     Retrieves a list of ``Tag`` objects associated with a given model
@@ -225,7 +239,24 @@ def do_tagged_objects(parser, token):
         raise TemplateSyntaxError(_("fourth argument to %s tag must be 'as'") % bits[0])
     return TaggedObjectsNode(bits[1], bits[3], bits[5])
 
+def do_tag_slug(parser, token):
+    """
+    Usage::
+       {% tag_slug for [tags] [exclude=tag] %}
+    """
+    bits = token.contents.split()
+    if not len(bits) in (3, 4):
+        raise TemplateSyntaxError(_('%s tag requires two or three arguments') % bits[0])
+    if bits[1] != 'for':
+        raise TemplateSyntaxError(_("first argument to %s tag must be 'for'") % bits[0])
+    exclude = None
+    if len(bits) == 4:
+        exclude = bits[3].split('=')[1]
+    return TagSlugNode(bits[2], exclude)
+
 register.tag('tags_for_model', do_tags_for_model)
 register.tag('tag_cloud_for_model', do_tag_cloud_for_model)
 register.tag('tags_for_object', do_tags_for_object)
 register.tag('tagged_objects', do_tagged_objects)
+register.tag('tag_slug', do_tag_slug)
+
