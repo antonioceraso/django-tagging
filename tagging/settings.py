@@ -14,4 +14,9 @@ FORCE_LOWERCASE_TAGS = getattr(settings, 'FORCE_LOWERCASE_TAGS', True)
 
 MAX_TAG_COUNT = getattr(settings, 'MAX_TAG_COUNT', 10)
 
-TAGGING_APP_MAP = getattr(settings, 'TAGGING_APP_MAP', {})
+# list of applications that tag_index view will display
+TAGGED_MODELS = getattr(settings, 'TAGGED_MODELS')
+
+if not TAGGED_MODELS:
+    # TODO: fetch all tagged content_types from TaggedItem and build a default dict 
+    pass
