@@ -8,7 +8,6 @@ http://github.com/brosner/django-tagging
 Additionally it provides or will provide:
 [x] slug fields for tags
 [x] time stamps to hold when a tag is added and when last time an item is tagged with that tag
-[x] relations among tags to specify synonyms, parent, child, etc. relations types
+[x] relations among tags to specify synonyms, parent, child, etc. relation types
 [x] define terms as sets of tags
-[ ] weight of relation between an item and a tag (i.e. how many times an item is tagged with that tag)
 [ ] de-normalize to remove all join queries
