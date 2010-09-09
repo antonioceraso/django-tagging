@@ -21,3 +21,5 @@ INSTALLED_APPS = (
 )
 
 ROOT_URLCONF = 'urls'
+
+TAGGED_MODELS = ({'label': 'book', 'type': 'test_app.book', 'title': 'Books'},)

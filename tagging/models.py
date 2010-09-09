@@ -282,7 +282,7 @@ class TaggedItemManager(models.Manager):
           Now that the queryset-refactor branch is in the trunk, this can be
           tidied up significantly.
     """
-    def get_by_model(self, queryset_or_model, tags):
+    def get_by_model(self, queryset_or_model, tags, include_synonyms=True):
         """
         Create a ``QuerySet`` containing instances of the specified
         model associated with a given tag or list of tags.
@@ -297,6 +297,12 @@ class TaggedItemManager(models.Manager):
             # Optimization for single tag - fall through to the simpler
             # query below.
             tag = tags[0]
+            if include_synonyms:
+                related_tags = tag.get_related('~')
+                if related_tags.count() > 0:
+                    # we have synonyms; 1 tag & n synonyms; return the union
+                    return self.get_union_by_model(queryset_or_model, [tag] + list(related_tags))
+            # No synonyms; go on with the usual way
             queryset, model = get_queryset_and_model(queryset_or_model)
             content_type = ContentType.objects.get_for_model(model)
             db_table = self.model._meta.db_table
@@ -313,20 +319,23 @@ class TaggedItemManager(models.Manager):
                 params=[content_type.pk, tag.pk],
             )
         else:
-            return self.get_intersection_by_model(queryset_or_model, tags)
+            # we have multiple tags
+            return self.get_intersection_by_model(queryset_or_model, tags, 
+                                                  include_synonyms=include_synonyms)
 
 
-    def get_intersection_by_model(self, queryset_or_model, tags):
+    def get_intersection_by_model(self, queryset_or_model, tags, include_synonyms=True):
         """
         Create a ``QuerySet`` containing instances of the specified
         model associated with *all* of the given list of tags.
         """
         tags = get_tag_list(tags)
         tag_count = len(tags)
-        queryset, model = get_queryset_and_model(queryset_or_model)
 
         if not tag_count:
             return model._default_manager.none()
+
+        queryset, model = get_queryset_and_model(queryset_or_model)
 
         model_table = qn(model._meta.db_table)
         # This query selects the ids of all objects which have all the
@@ -346,6 +355,7 @@ class TaggedItemManager(models.Manager):
             'tag_id_placeholders': ','.join(['%s'] * tag_count),
             'tag_count': tag_count,
         }
+        print query
 
         cursor = connection.cursor()
         cursor.execute(query, [tag.pk for tag in tags])
@@ -482,11 +492,11 @@ class Tag(models.Model):
         If the relation type is not specified, all related tags
         except the ones of type '!' (not related) are returned.
         """
-        tags = Tag.objects.filter(is_valid=True).filter(relatedtag__related_tag=self).exclude(pk=self.id)
-        if relation_type:
-            tags = tags.filter(relatedtag__relation_type=relation_type)
-        else:
-            tags = tags.filter(relatedtag__relation_type__in=['~', '>', '<'])
+        tags = Tag.objects.filter(is_valid=True).exclude(pk=self.id)
+        relation_type = relation_type or '='
+        # the following 2 filters should be in the same filter call
+        tags = tags.filter(relatedtag__related_tag=self,
+                           relatedtag__relation_type=relation_type)
         return tags.distinct().order_by('-relatedtag__count')
 
     class Meta:
