@@ -686,7 +686,7 @@ class RelatedTag(models.Model):
                     rev.relation_type = reverse_rel_type
                     rev.save()
         # update TaggedItem objects according to the relation type
-        if relation_type == '=>':
+        if self.relation_type == '=>':
             for tagged_item in TaggedItem.objects.filter(tag=self.tag):
                 TaggedItem.objects.get_or_create(tag=self.related_tag,
                                                  content_type=tagged_item.content_type,
