@@ -701,7 +701,7 @@ class RelatedTag(models.Model):
         self.save()
 
     def __unicode__(self):
-        return '%s %s %s' % (self.tag, self.relation_type, self.related_tag)
+        return u'%s %s %s' % (self.tag, self.relation_type, self.related_tag)
 
     class Meta:
         unique_together = (('tag', 'related_tag'),)
