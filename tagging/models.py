@@ -45,10 +45,7 @@ class TagManager(models.Manager):
         # Add new tags
         current_tag_names = [tag.name for tag in current_tags]
         for tag_name in updated_tag_names:
-            if tag_name not in current_tag_names:
-                tag, created = self.get_or_create(slug=slugify(tag_name),
-                                                  defaults={'name': tag_name})
-                TaggedItem._default_manager.create(tag=tag, object=obj)
+            self.add_tag(obj, tag_name)
 
     def add_tag(self, obj, tag_name):
         """
@@ -64,6 +61,15 @@ class TagManager(models.Manager):
             tag_name = tag_name.lower()
         tag, created = self.get_or_create(slug=slugify(tag_name),
                                           defaults={'name': tag_name})
+        if not created:
+            # check if there is a preferred synonym for this tag
+            try:
+                related_tag = RelatedTag.objects.get(tag=tag, relation_type='=>')
+            except RelatedTag.DoesNotExist:
+                pass
+            else:
+                # there is a preferred synonym; use it instead of the original
+                tag = related_tag.related_tag
         ctype = ContentType.objects.get_for_model(obj)
         TaggedItem._default_manager.get_or_create(
             tag=tag, content_type=ctype, object_id=obj.pk)
@@ -283,6 +289,7 @@ class TaggedItemManager(models.Manager):
           tidied up significantly.
     """
     def get_by_model(self, queryset_or_model, tags, include_synonyms=True):
+        # TODO: we may remove include synonyms as the preferred synonym is forced when tagging
         """
         Create a ``QuerySet`` containing instances of the specified
         model associated with a given tag or list of tags.
@@ -298,7 +305,7 @@ class TaggedItemManager(models.Manager):
             # query below.
             tag = tags[0]
             if include_synonyms:
-                related_tags = tag.get_related('~')
+                related_tags = tag.get_related(relation_types=['=', '=>', '<='])
                 if related_tags.count() > 0:
                     # we have synonyms; 1 tag & n synonyms; return the union
                     return self.get_union_by_model(queryset_or_model, [tag] + list(related_tags))
@@ -334,6 +341,19 @@ class TaggedItemManager(models.Manager):
 
         if not tag_count:
             return model._default_manager.none()
+        
+        # replace the tags with their preferred synonyms if they exist
+        temp_tags = []
+        for tag in tags:
+            try:
+                rt = RelatedTag.objects.get(tag=tag, relation_type='=>')
+            except RelatedTag.DoesNotExist:
+                temp_tags.append(tag)
+            else:
+                temp_tags.append(rt.related_tag)
+        
+        # make sure the tags are unique
+        tags = list(set(temp_tags))
 
         queryset, model = get_queryset_and_model(queryset_or_model)
 
@@ -355,7 +375,7 @@ class TaggedItemManager(models.Manager):
             'tag_id_placeholders': ','.join(['%s'] * tag_count),
             'tag_count': tag_count,
         }
-        print query
+        print query, ','.join(['%s'] * tag_count), [tag.pk for tag in tags]
 
         cursor = connection.cursor()
         cursor.execute(query, [tag.pk for tag in tags])
@@ -403,6 +423,7 @@ class TaggedItemManager(models.Manager):
             return model._default_manager.none()
 
     def get_related(self, obj, queryset_or_model, num=None):
+        # TODO: remove this in favor of Tag.get_related()
         """
         Retrieve a list of instances of the specified model which share
         tags with the model instance ``obj``, ordered by the number of
@@ -486,17 +507,16 @@ class Tag(models.Model):
     def get_absolute_url(self):
         return ('tag_detail', (), {'tag_slug': self.slug})
     
-    def get_related(self, relation_type=None):
+    def get_related(self, relation_types=['~']):
         """
         Returns the related tags of the tag instance. 
-        If the relation type is not specified, all related tags
-        except the ones of type '!' (not related) are returned.
         """
+        if isinstance(relation_types, basestring):
+            relation_types = [relation_types]
         tags = Tag.objects.filter(is_valid=True).exclude(pk=self.id)
-        relation_type = relation_type or '='
         # the following 2 filters should be in the same filter call
         tags = tags.filter(relatedtag__related_tag=self,
-                           relatedtag__relation_type=relation_type)
+                           relatedtag__relation_type__in=relation_types)
         return tags.distinct().order_by('-relatedtag__count')
 
     class Meta:
@@ -594,27 +614,27 @@ class RelatedTagManager(models.Manager):
                                         rel.count += 1
                                         rel.save()
     
-    def get_related(self, tags, relation_type=None):
+    def get_related(self, tags, relation_types=['~']):
         """
         Takes a list of tags and returns tags that are related to all of them
         """ 
         tags = get_tag_list(tags)
         result_tags = Tag.objects.all().distinct()
         for tag in tags:
-            result_tags = result_tags & tag.get_related(relation_type=relation_type)
+            result_tags = result_tags & tag.get_related(relation_type__in=relation_types)
         return result_tags
                                     
         
 RELATION_CHOICES = (('!', _('! (not related)')),
                     ('~', _('~ (symmetrically related)')),
-                    ('=', _('= (synonym)')),
                     ('<', _('< (is child of)')),
                     ('>', _('> (is parent of)')),
                     ('.', _('. (short form of)')),
                     ('_', _('_ (long form of)')),
                     ('0', _('0 (root of)')),
                     ('+', _('+ (affixed form of)')),
-                    ('=>', _('=> (non preferred synonym of)')), # forward to the preferred one
+                    ('=', _('= (synonym; use => or <= instead)')), # prefer '=>' or '<=' instead of '='
+                    ('=>', _('=> (non preferred synonym of)')),
                     ('<=', _('<= (preferred synonym of)')))
 
 REVERSE_RELATIONS = {'<': '>', '>': '<',
@@ -641,10 +661,20 @@ class RelatedTag(models.Model):
         '''
         if self.tag != self.related_tag: # cannot relate a tag with itself
             if self.relation_type == '=>' or self.relation_type == '<=':
+                # do not let a tag have more than 1 tags to forward to
                 condition = (models.Q(tag=self.tag) & models.Q(relation_type='=>')) | \
                             (models.Q(tag=self.related_tag) & models.Q(relation_type='=>'))
                 if RelatedTag.objects.filter(condition).count() > 0:
                     raise InvalidTagRelation(_('A Tag cannot have more than 1 preferred synonyms'))
+                # do not let tag_a => tag_b => tag_c, instead force tag_a => tag_c
+                elif self.relation_type == '=>':
+                    # check if the tag being forwarded to is also forwarded
+                    try:
+                        rt = RelatedTag.objects.get(tag=self.related_tag, relation_type='=>')
+                    except RelatedTag.DoesNotExist:
+                        pass
+                    else:
+                        self.related_tag = rt.related_tag
             super(RelatedTag, self).save(**kwargs)
             # get the reverse type; if does not exist, reverse = original
             reverse_rel_type = REVERSE_RELATIONS.get(self.relation_type, self.relation_type)
@@ -655,10 +685,17 @@ class RelatedTag(models.Model):
                 if rev.relation_type != reverse_rel_type:
                     rev.relation_type = reverse_rel_type
                     rev.save()
+        # update TaggedItem objects according to the relation type
+        if relation_type == '=>':
+            for tagged_item in TaggedItem.objects.filter(tag=self.tag):
+                TaggedItem.objects.get_or_create(tag=self.related_tag,
+                                                 content_type=tagged_item.content_type,
+                                                 object_id=tagged_item.object_id)
+                tagged_item.delete()
     
     def delete(self, **kwargs):
         '''
-        relations are not deleted, but their relation type is set to 'not related'
+        relations are not deleted, but their relation types are set to 'not related'
         '''
         self.relation_type = '!'
         self.save()
