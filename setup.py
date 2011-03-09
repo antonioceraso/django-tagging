@@ -30,12 +30,12 @@ for scheme in INSTALL_SCHEMES.values():
     scheme['data'] = scheme['purelib']
 
 setup(
-    name = 'teknolab-django-tagging',
+    name = 'django-tagging',
     version = tagging.get_version(),
     description = 'Generic tagging application for Django',
-    url = 'http://github.com/teknolab/teknolab-django-tagging',
+    url = 'http://github.com/pythonben/django-tagging',
     packages = ['tagging', 'tagging.templatetags', 'tagging.tests', 
-                'tagging.templates', 'tagging.templates.tagging'],
+                 ],
     classifiers = ['Development Status :: 4 - Beta',
                    'Environment :: Web Environment',
                    'Framework :: Django',

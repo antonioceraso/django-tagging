@@ -36,6 +36,7 @@ def tagged_object_list(request, queryset_or_model=None, tag_slug=None,
     app = None
     if not queryset_or_model:
         if app_name:
+            
             for a in settings.TAGGED_MODELS:
                 if a['label'] == app_name:
                     app = a
