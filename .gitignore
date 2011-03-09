@@ -1,0 +1,24 @@
+# File types #
+##############
+*.pyc 
+*.pot
+*.pot  
+*.sw[opn]
+
+
+# Directories #
+###############
+docs/_build/
+tmp/
+# Specific files #
+##################
+
+
+# OS generated files #
+######################
+.DS_Store?
+ehthumbs.db
+Icon?
+Thumbs.db
+*~
+
