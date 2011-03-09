@@ -45,7 +45,10 @@ class TagManager(models.Manager):
         # Add new tags
         current_tag_names = [tag.name for tag in current_tags]
         for tag_name in updated_tag_names:
-            self.add_tag(obj, tag_name)
+            if tag_name not in current_tag_names:
+                tag, created = self.get_or_create(name=tag_name)
+                TaggedItem._default_manager.create(tag=tag, object=obj)
+
 
     def add_tag(self, obj, tag_name):
         """
