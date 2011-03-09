@@ -31,6 +31,9 @@ for scheme in INSTALL_SCHEMES.values():
 
 setup(
     name = 'django-tagging',
+    install_requires=[
+        'unidecode',
+    ],
     version = tagging.get_version(),
     description = 'Generic tagging application for Django',
     url = 'http://github.com/pythonben/django-tagging',
