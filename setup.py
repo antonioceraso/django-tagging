@@ -3,7 +3,8 @@ Based entirely on Django's own ``setup.py``.
 """
 import os
 from distutils.command.install import INSTALL_SCHEMES
-from distutils.core import setup
+from setuptools import setup, find_packages
+
 
 import tagging
 
@@ -31,6 +32,7 @@ for scheme in INSTALL_SCHEMES.values():
 
 setup(
     name = 'django-tagging',
+
     install_requires=[
         'unidecode',
     ],
