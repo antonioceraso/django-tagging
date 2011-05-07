@@ -5,6 +5,7 @@ from django.http import Http404
 from django.shortcuts import render_to_response
 from django.utils.translation import ugettext as _
 from django.views.generic.list_detail import object_list
+from django.views.generic import ListView
 from django.http import HttpResponse
 from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import get_object_or_404
@@ -20,6 +21,24 @@ try:
 except ImportError:
     import simplejson as json # python < 2.6
 
+class TaggedItemListView(ListView):
+    queryset_or_model = None
+    paginate_by = 10
+    def get_queryset(self):
+        tag_slug = self.kwargs.get('tag_slug')
+        self.tags = get_tags_from_slug(tag_slug)
+        return TaggedItem.objects.get_by_model(self.queryset_or_model, self.tags)
+
+    def get_context_data(self, **kwargs):
+        context = super(TaggedItemListView, self).get_context_data(**kwargs)
+        context['tags'] = self.tags
+        context['tag_slug'] = self.kwargs.get('tag_slug')
+        context['related_tags'] = RelatedTag.objects.get_related(self.tags)
+        context['app'] = ''
+        
+        if not self.kwargs.has_key('template_name'):
+            kwargs['template_name'] = 'tagging/taggeditem_list.html'
+        return context
 
 def tagged_object_list(request, queryset_or_model=None, tag_slug=None, 
                     content_type_id=None, app_name=None, user=None, **kwargs):
